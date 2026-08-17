@@ -1028,6 +1028,7 @@
       <div class="fb-error" id="fbError"></div>
     </form>
     <div class="fb-status" id="fbStatus">Kinokonekta sa Firebase…</div>
+    <div class="fb-status" id="fbHostHint" style="margin-top:4px;"></div>
   </div>
 </div>
 <button class="fb-signout" id="fbSignOutBtn" style="display:none;" onclick="window.__fbSignOut()">Sign out</button>
@@ -2014,6 +2015,8 @@ window.__fbSignOut = function(){
 };
 
 window.addEventListener('fb-auth-changed', (e) => {
+  const hostHint = document.getElementById('fbHostHint');
+  if(hostHint) hostHint.textContent = 'Site: ' + location.hostname;
   const user = e.detail.user;
   if(user){
     bootApp();
@@ -2035,11 +2038,22 @@ document.getElementById('fbLoginForm').addEventListener('submit', async function
     await window.__fb.signInWithEmailAndPassword(window.__fb.auth, email, password);
     // bootApp() runs automatically via the fb-auth-changed listener above
   }catch(err){
-    let msg = 'Hindi ma-sign in. Pakisuri ang email/password.';
-    if(err && err.code === 'auth/invalid-credential') msg = 'Mali ang email o password.';
-    if(err && err.code === 'auth/too-many-requests') msg = 'Sobrang dami ng subok — sandaling maghintay bago ulitin.';
+    const code = (err && err.code) || 'unknown';
+    let msg = `Hindi ma-sign in. (${code})`;
+    if(code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found'){
+      msg = `Mali ang email o password. (${code})`;
+    } else if(code === 'auth/too-many-requests'){
+      msg = `Sobrang dami ng subok — sandaling maghintay bago ulitin. (${code})`;
+    } else if(code === 'auth/unauthorized-domain'){
+      msg = `Hindi pa authorized ang site na 'to sa Firebase. I-add ang domain na ito sa Firebase Console → Authentication → Settings → Authorized domains: ${location.hostname}`;
+    } else if(code === 'auth/network-request-failed'){
+      msg = `Walang connection sa Firebase — tingnan ang internet. (${code})`;
+    } else if(code === 'auth/invalid-email'){
+      msg = `Mali ang format ng email. (${code})`;
+    }
     errBox.textContent = msg;
     errBox.classList.add('show');
+    console.error('Firebase sign-in error:', err);
   }finally{
     btn.disabled = false;
     btn.textContent = 'Sign in';
