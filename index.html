@@ -324,6 +324,210 @@
   .alarm-actions{ display:flex; gap:10px; }
   .alarm-actions button{ flex:1; }
 
+  /* ---------- Booking Details modal ---------- */
+  .details-overlay{
+    position:fixed; inset:0;
+    background: rgba(14,38,32,0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:85;
+    padding:20px;
+  }
+  .details-overlay.show{ display:flex; }
+  .details-card{
+    background:var(--paper);
+    border-radius:22px;
+    max-width:460px;
+    width:100%;
+    max-height:88vh;
+    overflow-y:auto;
+    box-shadow: 0 30px 70px -20px rgba(14,38,32,0.55);
+    animation: alarm-pop .28s cubic-bezier(.32,.9,.4,1.2);
+    position:relative;
+  }
+  .details-card::-webkit-scrollbar{ width:6px; }
+  .details-card::-webkit-scrollbar-thumb{ background:var(--border); border-radius:6px; }
+
+  .details-hero{
+    background: linear-gradient(155deg, var(--primary), var(--primary-dark));
+    padding: 26px 26px 22px;
+    border-radius: 22px 22px 0 0;
+    color:#fff;
+    position:relative;
+  }
+  .details-close{
+    position:absolute; top:14px; right:14px;
+    width:32px; height:32px;
+    border-radius:50%;
+    background: rgba(255,255,255,0.16);
+    border:none;
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition: background .15s ease;
+  }
+  .details-close:hover{ background: rgba(255,255,255,0.3); }
+  .details-close svg{ width:15px; height:15px; }
+
+  .details-guest{
+    font-family:'Fraunces', serif;
+    font-size:23px;
+    font-weight:700;
+    margin: 0 4px 4px 0;
+    padding-right:38px;
+    line-height:1.2;
+  }
+  .details-phone{
+    font-size:12.5px;
+    color: rgba(255,255,255,0.78);
+    margin-bottom:14px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .details-badges{ display:flex; gap:8px; flex-wrap:wrap; }
+  .details-badge{
+    font-size:10.5px;
+    font-weight:700;
+    padding:5px 11px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    background: rgba(255,255,255,0.18);
+    color:#fff;
+  }
+  .details-badge .dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+
+  .details-body{ padding: 20px 24px 24px; }
+
+  .details-stats{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .details-stat{
+    background:var(--paper-soft);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:10px 6px;
+    text-align:center;
+  }
+  .details-stat .label{
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--text-muted);
+    margin-bottom:4px;
+    font-weight:700;
+  }
+  .details-stat .value{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .details-stat .sub{ font-size:9.5px; color:var(--text-muted); margin-top:2px; }
+
+  .details-money{
+    background: var(--paper-soft);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    padding:14px 16px 6px;
+    margin-bottom:16px;
+  }
+  .details-money-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0 0 10px; font-size:13px; color:var(--ink-soft);
+  }
+  .details-money-row b{ font-family:'JetBrains Mono', monospace; color:var(--ink); }
+  .details-money-row.balance{
+    border-top:1px dashed var(--border);
+    margin-top:2px; padding-top:12px;
+    font-size:13.5px; font-weight:700;
+  }
+  .details-money-row.balance b{ font-size:18px; color:var(--danger); }
+  .details-money-row.balance.settled b{ color:var(--success); }
+
+  .details-notes{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    background:var(--paper-soft);
+    border-radius:10px;
+    padding:10px 12px;
+    margin-bottom:16px;
+    border:1px solid var(--border-soft);
+    white-space:pre-wrap;
+  }
+  .details-notes .label{
+    font-size:10px; text-transform:uppercase; color:var(--text-muted);
+    font-weight:700; margin-bottom:4px; letter-spacing:.04em;
+  }
+
+  .details-payment-editor{
+    background:var(--gold-soft);
+    border:1px solid var(--gold);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:16px;
+    display:none;
+  }
+  .details-payment-editor.show{ display:block; animation: alarm-pop .18s ease; }
+  .details-payment-editor .field-row{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;
+  }
+  .details-payment-editor label{
+    font-size:11px; font-weight:700; color:#7A5B1E; margin-bottom:4px; display:block;
+  }
+  .details-payment-editor .editor-actions{ display:flex; gap:8px; }
+  .details-payment-editor .editor-actions button{
+    flex:1; padding:9px; border-radius:9px; font-size:12.5px; font-weight:700; cursor:pointer; border:none;
+  }
+  .details-payment-editor .save-btn{ background:var(--primary); color:#fff; }
+  .details-payment-editor .save-btn:hover{ background:var(--primary-dark); }
+  .details-payment-editor .cancel-mini-btn{ background:#fff; color:var(--ink-soft); border:1px solid var(--border); }
+
+  .details-actions{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:8px;
+  }
+  .details-action-btn{
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    padding:11px 4px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:var(--paper-soft);
+    cursor:pointer;
+    font-size:11px;
+    font-weight:700;
+    color:var(--ink-soft);
+    transition: all .15s ease;
+  }
+  .details-action-btn svg{ width:16px; height:16px; }
+  .details-action-btn:hover:not(:disabled){ transform:translateY(-1px); box-shadow: var(--shadow); }
+  .details-action-btn.checkin{ color:var(--success); border-color: rgba(63,143,99,0.35); }
+  .details-action-btn.checkin:hover:not(:disabled){ background:var(--success-soft); }
+  .details-action-btn.checkout{ color:var(--danger); border-color: rgba(189,81,56,0.35); }
+  .details-action-btn.checkout:hover:not(:disabled){ background:var(--danger-soft); }
+  .details-action-btn.payment{ color:#7A5B1E; border-color: rgba(198,150,58,0.35); }
+  .details-action-btn.payment:hover:not(:disabled){ background:var(--gold-soft); }
+  .details-action-btn.edit{ color:var(--info); border-color: rgba(62,118,168,0.35); }
+  .details-action-btn.edit:hover:not(:disabled){ background:var(--info-soft); }
+  .details-action-btn:disabled{ opacity:.38; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  @media (max-width:480px){
+    .details-hero{ padding:22px 20px 18px; }
+    .details-body{ padding:18px 16px 20px; }
+    .details-guest{ font-size:20px; }
+    .details-stats{ grid-template-columns: repeat(2, 1fr); }
+    .details-actions{ grid-template-columns: repeat(2, 1fr); }
+  }
+
   /* ---------- Summary strip ---------- */
   .summary{
     display:grid;
@@ -1210,9 +1414,15 @@
         <input type="text" id="guestName" required placeholder="e.g. Maria Santos">
       </div>
 
-      <div class="field">
-        <label for="guestPhone">Contact number (optional)</label>
-        <input type="tel" id="guestPhone" placeholder="09xx xxx xxxx">
+      <div class="field field-row">
+        <div>
+          <label for="guestPhone">Contact number (optional)</label>
+          <input type="tel" id="guestPhone" placeholder="09xx xxx xxxx">
+        </div>
+        <div>
+          <label for="pax">Guests (pax)</label>
+          <input type="number" id="pax" min="1" step="1" value="1">
+        </div>
       </div>
 
       <div class="field field-row">
@@ -1294,6 +1504,74 @@
     <div class="alarm-actions">
       <button class="cancel-btn" onclick="snoozeAlarm()">Snooze 10 min</button>
       <button class="primary-btn" onclick="dismissAlarm()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="details-overlay" id="detailsOverlay" onclick="if(event.target===this) closeBookingDetails()">
+  <div class="details-card">
+    <div class="details-hero">
+      <button class="details-close" onclick="closeBookingDetails()" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="details-guest" id="detailsGuest"></div>
+      <div class="details-phone" id="detailsPhone"></div>
+      <div class="details-badges" id="detailsBadges"></div>
+    </div>
+    <div class="details-body">
+      <div class="details-stats" id="detailsStats"></div>
+
+      <div class="details-money">
+        <div class="details-money-row"><span>Total amount</span><b id="detailsTotal">₱0</b></div>
+        <div class="details-money-row"><span>Paid amount</span><b id="detailsPaid">₱0</b></div>
+        <div class="details-money-row balance" id="detailsBalanceRow"><span>Remaining balance</span><b id="detailsBalance">₱0</b></div>
+      </div>
+
+      <div class="details-notes" id="detailsNotesWrap" style="display:none;">
+        <div class="label">Notes</div>
+        <div id="detailsNotes"></div>
+      </div>
+
+      <div class="details-payment-editor" id="detailsPaymentEditor">
+        <div class="field-row">
+          <div>
+            <label for="detailsAmountPaid">Amount paid (₱)</label>
+            <input type="number" id="detailsAmountPaid" min="0" step="1">
+          </div>
+          <div>
+            <label for="detailsPaymentStatus">Payment status</label>
+            <select id="detailsPaymentStatus">
+              <option value="unpaid">Unpaid</option>
+              <option value="deposit">Deposit only</option>
+              <option value="partial">Partial</option>
+              <option value="paid">Fully paid</option>
+            </select>
+          </div>
+        </div>
+        <div class="editor-actions">
+          <button type="button" class="cancel-mini-btn" onclick="togglePaymentEditor(false)">Cancel</button>
+          <button type="button" class="save-btn" onclick="savePaymentFromDetails()">Save payment</button>
+        </div>
+      </div>
+
+      <div class="details-actions">
+        <button type="button" class="details-action-btn checkin" id="detailsCheckInBtn" onclick="detailsCheckIn()">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Check In
+        </button>
+        <button type="button" class="details-action-btn edit" onclick="detailsEdit()">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Edit
+        </button>
+        <button type="button" class="details-action-btn payment" onclick="togglePaymentEditor()">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/></svg>
+          Payment
+        </button>
+        <button type="button" class="details-action-btn checkout" id="detailsCheckOutBtn" onclick="detailsCheckOut()">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Check Out
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1420,6 +1698,7 @@ function migrateBooking(b){
     b.checkedIn = !!b.checkedOut || (b.checkIn <= todayStr());
   }
   if(b.actualCheckIn === undefined) b.actualCheckIn = null;
+  if(b.pax === undefined || b.pax === null || b.pax === '') b.pax = 1;
   return b;
 }
 
@@ -1572,6 +1851,7 @@ function renderCalendar(){
         pill.title = timeStr ? `${b.guest} · ${timeStr}` : b.guest;
         const temporal = getTemporalState(b);
         pill.innerHTML = `<span class="temporal-dot ${temporal}"></span><span class="arrow">${marker}</span>${escapeHtml(b.guest)}${timeStr ? ` <span class="arrow">${timeStr}</span>` : ''}`;
+        pill.onclick = (e) => { e.stopPropagation(); openBookingDetails(b.id); };
         stack.appendChild(pill);
       });
       if(dayBookings.length > 3){
@@ -1692,14 +1972,14 @@ function renderTable(){
     const balance = Math.max(0, b.total - b.amountPaid);
     const temporal = getTemporalState(b);
     return `
-      <tr>
+      <tr onclick="openBookingDetails('${b.id}')" style="cursor:pointer;">
         <td><span class="temporal-dot ${temporal}"></span><strong>${escapeHtml(b.guest)}</strong>${b.phone ? `<div style="font-size:11px;color:var(--text-muted);margin-left:12px;">${escapeHtml(b.phone)}</div>`:''}</td>
         <td class="mono">${formatShort(b.checkIn)} → ${formatShort(b.checkOut)} <span style="color:var(--text-muted)">${formatTime(b.checkOutTime)}</span></td>
         <td><span class="badge status-${b.status}">${statusLabel(b.status)}</span></td>
         <td class="mono">${formatPHP(b.total)}</td>
         <td class="mono">${formatPHP(b.amountPaid)}</td>
         <td class="mono">${formatPHP(balance)}</td>
-        <td>
+        <td onclick="event.stopPropagation()">
           <div class="row-actions">
             ${(!b.checkedOut && !b.checkedIn) ? (
               b.checkIn <= todayStr() ? `
@@ -1778,20 +2058,20 @@ function renderExistingForDate(dateStr){
            Checked out ${b.actualCheckOut ? '· ' + new Date(b.actualCheckOut).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''}${b.checkOutMethod === 'auto' ? ' (auto)' : ''}
          </div>`;
     } else if(checkedIn){
-      stayInfo = `<button type="button" class="link-btn checkout-btn" onclick="checkOutNow('${b.id}')">Check out now</button>`;
+      stayInfo = `<button type="button" class="link-btn checkout-btn" onclick="event.stopPropagation(); checkOutNow('${b.id}')">Check out now</button>`;
     } else {
       const eligible = b.checkIn <= todayStr();
       stayInfo = `<div class="reserved-badge">
            <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
            Reserved${b.deposit > 0 ? ' · may downpayment' : ''} — check-in ${formatShort(b.checkIn)}
          </div>
-         <button type="button" class="link-btn start-btn${eligible ? '' : ' disabled'}" ${eligible ? `onclick="startStay('${b.id}')"` : 'disabled title="Available once the check-in date arrives"'}>
+         <button type="button" class="link-btn start-btn${eligible ? '' : ' disabled'}" ${eligible ? `onclick="event.stopPropagation(); startStay('${b.id}')"` : 'disabled title="Available once the check-in date arrives"'}>
            ${eligible ? 'Start stay (check in)' : 'Not yet arrived'}
          </button>`;
     }
 
     return `
-      <div class="existing-card">
+      <div class="existing-card" onclick="openBookingDetails('${b.id}')" style="cursor:pointer;">
         <div class="top-row">
           <div class="guest-name"><span class="temporal-dot ${temporal}"></span>${escapeHtml(b.guest)}</div>
           <span class="badge status-${b.status}">${statusLabel(b.status)}</span>
@@ -1802,8 +2082,8 @@ function renderExistingForDate(dateStr){
         <div class="money-row"><span>Balance</span><b>${formatPHP(balance)}</b></div>
         ${stayInfo}
         <div class="card-actions">
-          <button type="button" class="link-btn" onclick="editBooking('${b.id}')">Edit</button>
-          <button type="button" class="link-btn danger" onclick="deleteBooking('${b.id}')">Delete</button>
+          <button type="button" class="link-btn" onclick="event.stopPropagation(); editBooking('${b.id}')">Edit</button>
+          <button type="button" class="link-btn danger" onclick="event.stopPropagation(); deleteBooking('${b.id}')">Delete</button>
         </div>
       </div>`;
   }).join('');
@@ -1818,6 +2098,7 @@ function resetForm(dateStr){
   document.getElementById('cancelEditBtn').style.display = 'none';
   document.getElementById('depositAmount').value = 0;
   document.getElementById('amountPaid').value = 0;
+  document.getElementById('pax').value = 1;
 
   const ci = dateStr || activeDrawerDate || todayStr();
   document.getElementById('checkIn').value = ci;
@@ -1835,6 +2116,7 @@ function editBooking(id){
   document.getElementById('bookingId').value = b.id;
   document.getElementById('guestName').value = b.guest;
   document.getElementById('guestPhone').value = b.phone || '';
+  document.getElementById('pax').value = b.pax || 1;
   document.getElementById('checkIn').value = b.checkIn;
   document.getElementById('checkOut').value = b.checkOut;
   document.getElementById('checkInTime').value = b.checkInTime || '14:00';
@@ -1861,6 +2143,139 @@ function deleteBooking(id){
   persistBookings();
   renderAll();
   if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+}
+
+/* ---------------- Booking Details modal ---------------- */
+/* Clicking a booking anywhere (calendar pill, table row, or a card inside
+   the day drawer) opens this clean summary panel first, instead of jumping
+   straight into the raw edit form. From here the front desk can Check In,
+   Check Out, jump into Edit, or do a quick Payment update. */
+
+let detailsBookingId = null;
+
+function renderBookingDetailsModal(b){
+  const balance = Math.max(0, b.total - b.amountPaid);
+  const nights = nightsBetween(b.checkIn, b.checkOut);
+  const temporal = getTemporalState(b);
+  const checkedIn = !!b.checkedIn;
+  const checkedOut = !!b.checkedOut;
+  const eligible = b.checkIn <= todayStr();
+
+  document.getElementById('detailsGuest').textContent = b.guest;
+  const phoneEl = document.getElementById('detailsPhone');
+  if(b.phone){ phoneEl.textContent = b.phone; phoneEl.style.display = 'block'; }
+  else { phoneEl.textContent = ''; phoneEl.style.display = 'none'; }
+
+  const temporalLabel = checkedOut ? 'Checked out' : (checkedIn ? 'Checked in' : 'Reserved');
+  const temporalColor = temporal === 'past' ? 'var(--danger)' : (temporal === 'active' ? 'var(--success)' : 'var(--gold)');
+  document.getElementById('detailsBadges').innerHTML = `
+    <span class="details-badge">${statusLabel(b.status)}</span>
+    <span class="details-badge"><span class="dot" style="background:${temporalColor}"></span>${temporalLabel}</span>
+  `;
+
+  document.getElementById('detailsStats').innerHTML = `
+    <div class="details-stat"><div class="label">Nights</div><div class="value">${nights}</div></div>
+    <div class="details-stat"><div class="label">Pax</div><div class="value">${b.pax || 1}</div></div>
+    <div class="details-stat"><div class="label">Check-in</div><div class="value">${formatShort(b.checkIn)}</div><div class="sub">${formatTime(b.checkInTime)}</div></div>
+    <div class="details-stat"><div class="label">Check-out</div><div class="value">${formatShort(b.checkOut)}</div><div class="sub">${formatTime(b.checkOutTime)}</div></div>
+  `;
+
+  document.getElementById('detailsTotal').textContent = formatPHP(b.total);
+  document.getElementById('detailsPaid').textContent = formatPHP(b.amountPaid);
+  document.getElementById('detailsBalance').textContent = formatPHP(balance);
+  document.getElementById('detailsBalanceRow').classList.toggle('settled', balance<=0 && b.total>0);
+
+  const notesWrap = document.getElementById('detailsNotesWrap');
+  if(b.notes){
+    notesWrap.style.display = 'block';
+    document.getElementById('detailsNotes').textContent = b.notes;
+  } else {
+    notesWrap.style.display = 'none';
+  }
+
+  document.getElementById('detailsAmountPaid').value = b.amountPaid;
+  document.getElementById('detailsPaymentStatus').value = b.status;
+
+  const checkInBtn = document.getElementById('detailsCheckInBtn');
+  const checkOutBtn = document.getElementById('detailsCheckOutBtn');
+  checkInBtn.disabled = checkedIn || checkedOut || !eligible;
+  checkInBtn.title = checkedOut ? 'Already checked out'
+    : checkedIn ? 'Already checked in'
+    : !eligible ? `Available on ${formatShort(b.checkIn)}`
+    : 'Start the stay';
+  checkOutBtn.disabled = checkedOut || !checkedIn;
+  checkOutBtn.title = checkedOut ? 'Already checked out'
+    : !checkedIn ? "Guest hasn't checked in yet"
+    : 'Check the guest out';
+}
+
+function openBookingDetails(id){
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  detailsBookingId = id;
+  togglePaymentEditor(false);
+  renderBookingDetailsModal(b);
+  document.getElementById('detailsOverlay').classList.add('show');
+}
+
+function closeBookingDetails(){
+  document.getElementById('detailsOverlay').classList.remove('show');
+  detailsBookingId = null;
+}
+
+function togglePaymentEditor(force){
+  const editor = document.getElementById('detailsPaymentEditor');
+  const show = typeof force === 'boolean' ? force : !editor.classList.contains('show');
+  editor.classList.toggle('show', show);
+  if(show && detailsBookingId){
+    const b = bookings.find(x=>x.id===detailsBookingId);
+    if(b){
+      document.getElementById('detailsAmountPaid').value = b.amountPaid;
+      document.getElementById('detailsPaymentStatus').value = b.status;
+    }
+  }
+}
+
+function savePaymentFromDetails(){
+  const b = bookings.find(x=>x.id===detailsBookingId);
+  if(!b) return;
+  b.amountPaid = Math.max(0, Number(document.getElementById('detailsAmountPaid').value) || 0);
+  b.status = document.getElementById('detailsPaymentStatus').value;
+  b.updatedAt = new Date().toISOString();
+  persistBookings();
+  renderAll();
+  if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+  renderBookingDetailsModal(b);
+  togglePaymentEditor(false);
+}
+
+function detailsCheckIn(){
+  if(!detailsBookingId) return;
+  startStay(detailsBookingId);
+  const b = bookings.find(x=>x.id===detailsBookingId);
+  if(b) renderBookingDetailsModal(b);
+}
+
+function detailsCheckOut(){
+  if(!detailsBookingId) return;
+  checkOutNow(detailsBookingId);
+  const b = bookings.find(x=>x.id===detailsBookingId);
+  if(b) renderBookingDetailsModal(b);
+}
+
+/* Opens the day drawer for the booking's own check-in date (so the guest's
+   own reservation is what's shown) and drops straight into edit mode. */
+function openEditForBooking(id){
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  closeBookingDetails();
+  openDrawerForDate(b.checkIn);
+  editBooking(id);
+}
+
+function detailsEdit(){
+  if(!detailsBookingId) return;
+  openEditForBooking(detailsBookingId);
 }
 
 function recalcBalance(){
@@ -1900,6 +2315,7 @@ function saveBooking(e){
     id: id || (Date.now().toString(36) + Math.random().toString(36).slice(2,7)),
     guest: document.getElementById('guestName').value.trim(),
     phone: document.getElementById('guestPhone').value.trim(),
+    pax: Math.max(1, Number(document.getElementById('pax').value) || 1),
     checkIn, checkOut,
     checkInTime: document.getElementById('checkInTime').value || '14:00',
     checkOutTime: document.getElementById('checkOutTime').value || '11:00',
@@ -2142,6 +2558,12 @@ function showLoginGate(message){
 window.__fbSignOut = function(){
   window.__fb.signOut(window.__fb.auth);
 };
+
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && document.getElementById('detailsOverlay').classList.contains('show')){
+    closeBookingDetails();
+  }
+});
 
 window.addEventListener('fb-auth-changed', (e) => {
   const hostHint = document.getElementById('fbHostHint');
