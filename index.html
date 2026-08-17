@@ -513,6 +513,10 @@
     background:var(--success);
     box-shadow: 0 0 6px 1px rgba(63,143,99,0.55);
   }
+  .temporal-dot.upcoming{
+    background:var(--gold);
+    box-shadow: 0 0 6px 1px rgba(198,150,58,0.55);
+  }
 
   .weekday-row{
     display:grid;
@@ -673,6 +677,10 @@
   .icon-btn:hover{ background:var(--gold-soft); }
   .icon-btn.checkout-icon-btn{ color:var(--success); }
   .icon-btn.checkout-icon-btn:hover{ background:var(--success-soft); }
+  .icon-btn.start-icon-btn{ color:var(--gold); }
+  .icon-btn.start-icon-btn:hover{ background:var(--gold-soft); }
+  .icon-btn.start-icon-btn.disabled{ color:var(--text-muted); cursor:not-allowed; }
+  .icon-btn.start-icon-btn.disabled:hover{ background:none; }
   .icon-btn svg{ width:13px;height:13px; }
   .icon-btn.danger:hover{ background:var(--danger-soft); }
 
@@ -809,6 +817,50 @@
     width:fit-content;
   }
   .checked-out-badge svg{ width:12px; height:12px; }
+
+  .reserved-badge{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:600;
+    color:#7A5B1E;
+    background:var(--gold-soft);
+    padding:6px 11px;
+    border-radius:999px;
+    margin: 4px 0 6px;
+    width:fit-content;
+  }
+  .reserved-badge svg{ width:12px; height:12px; flex-shrink:0; }
+
+  .link-btn.start-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    color:var(--primary);
+    background:var(--success-soft);
+    padding:6px 11px;
+    border-radius:999px;
+    margin: 0 0 6px;
+  }
+  .link-btn.start-btn:hover{ background:#CFE8D9; }
+  .link-btn.start-btn::before{
+    content:"";
+    width:6px; height:6px;
+    border-radius:50%;
+    background:var(--success);
+    box-shadow: 0 0 6px 1px rgba(63,143,99,0.55);
+    flex-shrink:0;
+  }
+  .link-btn.start-btn.disabled{
+    color:var(--text-muted);
+    background:var(--border-soft);
+    cursor:not-allowed;
+  }
+  .link-btn.start-btn.disabled::before{
+    background:var(--text-muted);
+    box-shadow:none;
+  }
 
   .section-label{
     font-size:12px;
@@ -1099,8 +1151,9 @@
       <span><i class="dot" style="background:var(--success)"></i> Fully paid</span>
     </div>
     <div class="temporal-legend">
+      <span><span class="temporal-dot upcoming"></span> Reserved (advance booking, not yet started)</span>
+      <span><span class="temporal-dot active"></span> Checked in / ongoing</span>
       <span><span class="temporal-dot past"></span> Already checked out</span>
-      <span><span class="temporal-dot active"></span> Ongoing / upcoming</span>
     </div>
 
     <div class="weekday-row">
@@ -1271,6 +1324,7 @@ function loadBookings(){
   }catch(e){
     bookings = [];
   }
+  bookings = bookings.map(migrateBooking);
 }
 
 function cacheBookingsLocally(){
@@ -1302,7 +1356,7 @@ function startCloudSync(){
     if(fsSaving) return; // this update just echoed our own write
     if(snap.exists()){
       const data = snap.data();
-      bookings = Array.isArray(data.bookings) ? data.bookings : [];
+      bookings = Array.isArray(data.bookings) ? data.bookings.map(migrateBooking) : [];
     } else {
       bookings = [];
     }
@@ -1336,10 +1390,13 @@ function overlapsDate(booking, dateStr){
 }
 
 /* Temporal state — separate from payment status.
-   'past'   = guest has already checked out (either manually confirmed,
-              auto-detected once checkout date+time has passed, or the
-              checkout date itself is fully behind us)
-   'active' = ongoing (checked in, not yet past checkout) or still upcoming */
+   'past'     = guest has already checked out (either manually confirmed,
+                auto-detected once checkout date+time has passed, or the
+                checkout date itself is fully behind us)
+   'upcoming' = advance booking — reserved (downpayment can already be
+                recorded) but the guest hasn't actually arrived/started yet
+   'active'   = guest has been manually started (checked in) and hasn't
+                checked out yet */
 function getTemporalState(booking){
   if(booking.checkedOut) return 'past';
   const t = todayStr();
@@ -1350,7 +1407,20 @@ function getTemporalState(booking){
     const scheduled = booking.checkOutTime || '11:00';
     if(nowKey >= scheduled) return 'past';
   }
-  return 'active';
+  return booking.checkedIn ? 'active' : 'upcoming';
+}
+
+/* Bookings saved before the "advance booking / Start" feature existed
+   don't have a checkedIn field. Treat them as already started if their
+   check-in date has already arrived (so nothing already in-house suddenly
+   looks like an un-started reservation); otherwise leave them as a normal
+   not-yet-started advance booking. */
+function migrateBooking(b){
+  if(b.checkedIn === undefined || b.checkedIn === null){
+    b.checkedIn = !!b.checkedOut || (b.checkIn <= todayStr());
+  }
+  if(b.actualCheckIn === undefined) b.actualCheckIn = null;
+  return b;
 }
 
 /* Is the scheduled checkout still in the future relative to right now? */
@@ -1361,6 +1431,28 @@ function isCheckoutInFuture(checkOutDate, checkOutTime){
   const now = new Date();
   const nowKey = pad(now.getHours()) + ':' + pad(now.getMinutes());
   return (checkOutTime || '11:00') > nowKey;
+}
+
+/* Manual start of stay — turns an advance booking (reserved, downpayment
+   already recorded) into an actual in-house / checked-in guest. This is
+   deliberately manual (never automatic) since it represents the guest
+   physically arriving. Only allowed once the scheduled check-in date has
+   arrived, so a booking made days ahead can't accidentally be "started"
+   early. */
+function startStay(id){
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  if(b.checkedIn) return;
+  if(b.checkIn > todayStr()){
+    alert(`Hindi pa pwedeng i-start ang stay ni ${b.guest}. Naka-schedule ang check-in sa ${formatShort(b.checkIn)}.`);
+    return;
+  }
+  if(!confirm(`Simulan (check in) ang stay ni ${b.guest} ngayon?`)) return;
+  b.checkedIn = true;
+  b.actualCheckIn = new Date().toISOString();
+  persistBookings();
+  renderAll();
+  if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
 }
 
 /* Manual early check-out — guest is leaving ahead of the scheduled time */
@@ -1609,7 +1701,16 @@ function renderTable(){
         <td class="mono">${formatPHP(balance)}</td>
         <td>
           <div class="row-actions">
-            ${!b.checkedOut ? `
+            ${(!b.checkedOut && !b.checkedIn) ? (
+              b.checkIn <= todayStr() ? `
+            <button class="icon-btn start-icon-btn" title="Start stay (check in)" onclick="startStay('${b.id}')">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>` : `
+            <button class="icon-btn start-icon-btn disabled" title="Reserved — available on check-in date (${formatShort(b.checkIn)})" disabled>
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>`
+            ) : ''}
+            ${(!b.checkedOut && b.checkedIn) ? `
             <button class="icon-btn checkout-icon-btn" title="Check out now" onclick="checkOutNow('${b.id}')">
               <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>` : ''}
@@ -1668,12 +1769,27 @@ function renderExistingForDate(dateStr){
     const balance = Math.max(0, b.total - b.amountPaid);
     const temporal = getTemporalState(b);
     const checkedOut = !!b.checkedOut;
-    const checkoutInfo = checkedOut
-      ? `<div class="checked-out-badge">
+    const checkedIn = !!b.checkedIn;
+
+    let stayInfo;
+    if(checkedOut){
+      stayInfo = `<div class="checked-out-badge">
            <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
            Checked out ${b.actualCheckOut ? '· ' + new Date(b.actualCheckOut).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''}${b.checkOutMethod === 'auto' ? ' (auto)' : ''}
-         </div>`
-      : `<button type="button" class="link-btn checkout-btn" onclick="checkOutNow('${b.id}')">Check out now</button>`;
+         </div>`;
+    } else if(checkedIn){
+      stayInfo = `<button type="button" class="link-btn checkout-btn" onclick="checkOutNow('${b.id}')">Check out now</button>`;
+    } else {
+      const eligible = b.checkIn <= todayStr();
+      stayInfo = `<div class="reserved-badge">
+           <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+           Reserved${b.deposit > 0 ? ' · may downpayment' : ''} — check-in ${formatShort(b.checkIn)}
+         </div>
+         <button type="button" class="link-btn start-btn${eligible ? '' : ' disabled'}" ${eligible ? `onclick="startStay('${b.id}')"` : 'disabled title="Available once the check-in date arrives"'}>
+           ${eligible ? 'Start stay (check in)' : 'Not yet arrived'}
+         </button>`;
+    }
+
     return `
       <div class="existing-card">
         <div class="top-row">
@@ -1684,7 +1800,7 @@ function renderExistingForDate(dateStr){
         <div class="money-row"><span>Total</span><b>${formatPHP(b.total)}</b></div>
         <div class="money-row"><span>Paid</span><b>${formatPHP(b.amountPaid)}</b></div>
         <div class="money-row"><span>Balance</span><b>${formatPHP(balance)}</b></div>
-        ${checkoutInfo}
+        ${stayInfo}
         <div class="card-actions">
           <button type="button" class="link-btn" onclick="editBooking('${b.id}')">Edit</button>
           <button type="button" class="link-btn danger" onclick="deleteBooking('${b.id}')">Delete</button>
@@ -1808,6 +1924,19 @@ function saveBooking(e){
     record.checkedOut = existing ? !!existing.checkedOut : false;
     record.actualCheckOut = existing ? (existing.actualCheckOut || null) : null;
     record.checkOutMethod = existing ? (existing.checkOutMethod || null) : null;
+  }
+
+  // Advance-booking support: a brand-new booking always starts as "reserved,
+  // not yet checked in" — the front desk presses "Start stay" once the guest
+  // actually arrives. When editing, keep whatever start state it already had,
+  // unless the check-in date is pushed out into the future again (schedule
+  // moved), in which case treat it as not-yet-started once more.
+  if(record.checkIn > todayStr()){
+    record.checkedIn = false;
+    record.actualCheckIn = null;
+  } else {
+    record.checkedIn = existing ? !!existing.checkedIn : false;
+    record.actualCheckIn = existing ? (existing.actualCheckIn || null) : null;
   }
 
   if(id){
