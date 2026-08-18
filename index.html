@@ -514,6 +514,7 @@
   .details-payment-editor .field-row{
     display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;
   }
+  .details-payment-editor .field{ margin-bottom:10px; }
   .details-payment-editor label{
     font-size:11px; font-weight:700; color:#7A5B1E; margin-bottom:4px; display:block;
   }
@@ -524,6 +525,70 @@
   .details-payment-editor .save-btn{ background:var(--primary); color:#fff; }
   .details-payment-editor .save-btn:hover{ background:var(--primary-dark); }
   .details-payment-editor .cancel-mini-btn{ background:#fff; color:var(--ink-soft); border:1px solid var(--border); }
+
+  /* ---- Payment history (booking details) ---- */
+  .details-payment-history{ margin-bottom:16px; }
+  .details-payment-history .label{
+    font-size:10px; text-transform:uppercase; color:var(--text-muted);
+    font-weight:700; margin-bottom:6px; letter-spacing:.04em;
+  }
+  .payment-history-empty{
+    font-size:12.5px; color:var(--text-muted);
+    background:var(--paper-soft); border:1px dashed var(--border);
+    border-radius:10px; padding:10px 12px;
+  }
+  .payment-history-list{ display:flex; flex-direction:column; gap:8px; }
+  .payment-history-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--paper-soft);
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    padding:9px 11px;
+  }
+  .payment-history-item .ph-main{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+  .payment-history-item .ph-desc{ font-size:12.5px; font-weight:600; color:var(--ink); }
+  .payment-history-item .ph-tags{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .payment-history-item .ph-type{
+    font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+    padding:2px 7px; border-radius:999px;
+    background:var(--status-downpayment-soft); color:#2B5578;
+    white-space:nowrap;
+  }
+  .payment-history-item .ph-type.balance{ background:var(--status-paid-soft); color:#7A5B12; }
+  .payment-history-item .ph-type.other{ background:var(--border-soft); color:var(--ink-soft); }
+  .payment-history-item .ph-method{ font-size:11.5px; color:var(--text-muted); font-weight:600; }
+  .payment-history-item .ph-date{ font-size:10.5px; color:var(--text-muted); }
+  .payment-history-item .ph-right{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .payment-history-item .ph-amount{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:13px; color:var(--ink); white-space:nowrap; }
+  .payment-history-item .ph-del{
+    background:none; border:none; cursor:pointer; color:var(--text-muted);
+    padding:5px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+    transition: all .12s ease;
+  }
+  .payment-history-item .ph-del:hover{ color:var(--danger); background:var(--danger-soft); }
+  .payment-history-item .ph-del svg{ width:14px; height:14px; }
+
+  /* ---- Additional items (extras) ---- */
+  .details-extras{ margin-bottom:16px; }
+  .details-extras-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .details-extras-head .label{
+    font-size:10px; text-transform:uppercase; color:var(--text-muted);
+    font-weight:700; letter-spacing:.04em; margin-bottom:0;
+  }
+  .mini-add-btn{
+    background:var(--gold-soft); color:#7A5B1E;
+    border:1px solid var(--gold);
+    font-size:11px; font-weight:700;
+    padding:4px 11px; border-radius:999px;
+    cursor:pointer;
+    transition: all .12s ease;
+  }
+  .mini-add-btn:hover{ background:var(--gold); color:#fff; }
+  #detailsExtraEditor{ margin-top:10px; }
+
+  /* ---- Computed (read-only) payment fields on the booking form ---- */
+  input:disabled, select:disabled{ opacity:.72; cursor:not-allowed; background:var(--border-soft); }
+  .field-hint{ font-size:11px; color:var(--text-muted); margin:-8px 0 14px; line-height:1.4; }
 
   .details-actions{
     display:grid;
@@ -1734,16 +1799,19 @@
       <div class="field field-row">
         <div>
           <label for="amountPaid">Amount paid so far (₱)</label>
-          <input type="number" id="amountPaid" min="0" step="1" value="0" oninput="recalcBalance()">
+          <input type="number" id="amountPaid" min="0" step="1" value="0" readonly disabled>
         </div>
         <div class="status-select-wrap">
           <label for="paymentStatus">Payment status</label>
-          <select id="paymentStatus">
+          <select id="paymentStatus" disabled>
+            <option value="unpaid">Unpaid</option>
             <option value="deposit">Deposit only</option>
+            <option value="partial">Partial</option>
             <option value="paid">Fully paid</option>
           </select>
         </div>
       </div>
+      <div class="field-hint">Computed automatically from Payment History — record payments from Booking Details after saving.</div>
 
       <div class="balance-box" id="balanceBox">
         <span class="label">Balance due</span>
@@ -1793,9 +1861,35 @@
       <div class="details-stats" id="detailsStats"></div>
 
       <div class="details-money">
+        <div class="details-money-row" id="detailsRoomTotalRow" style="display:none;"><span>Room / booking total</span><b id="detailsRoomTotal">₱0</b></div>
+        <div class="details-money-row" id="detailsExtrasRow" style="display:none;"><span>Additional items</span><b id="detailsExtrasTotal">₱0</b></div>
         <div class="details-money-row"><span>Total amount</span><b id="detailsTotal">₱0</b></div>
         <div class="details-money-row"><span>Paid amount</span><b id="detailsPaid">₱0</b></div>
         <div class="details-money-row balance" id="detailsBalanceRow"><span>Remaining balance</span><b id="detailsBalance">₱0</b></div>
+      </div>
+
+      <div class="details-extras" id="detailsExtrasWrap">
+        <div class="details-extras-head">
+          <div class="label">Additional items</div>
+          <button type="button" class="mini-add-btn" onclick="toggleExtraEditor()">+ Additional</button>
+        </div>
+        <div id="detailsExtrasList"></div>
+        <div class="details-payment-editor" id="detailsExtraEditor">
+          <div class="field-row">
+            <div>
+              <label for="extraDescription">Description</label>
+              <input type="text" id="extraDescription" placeholder="e.g. Extra pillow, karaoke rental">
+            </div>
+            <div>
+              <label for="extraAmount">Amount (₱)</label>
+              <input type="number" id="extraAmount" min="0" step="1" placeholder="0">
+            </div>
+          </div>
+          <div class="editor-actions">
+            <button type="button" class="cancel-mini-btn" onclick="toggleExtraEditor(false)">Cancel</button>
+            <button type="button" class="save-btn" onclick="addExtraFromDetails()">Add item</button>
+          </div>
+        </div>
       </div>
 
       <div class="details-notes" id="detailsNotesWrap" style="display:none;">
@@ -1803,23 +1897,49 @@
         <div id="detailsNotes"></div>
       </div>
 
+      <div class="details-payment-history" id="detailsPaymentHistoryWrap">
+        <div class="label">Payment history</div>
+        <div id="detailsPaymentHistory"></div>
+      </div>
+
       <div class="details-payment-editor" id="detailsPaymentEditor">
         <div class="field-row">
           <div>
-            <label for="detailsAmountPaid">Amount paid (₱)</label>
-            <input type="number" id="detailsAmountPaid" min="0" step="1">
+            <label for="paymentAmount">Amount (₱)</label>
+            <input type="number" id="paymentAmount" min="0" step="1" placeholder="0">
           </div>
           <div>
-            <label for="detailsPaymentStatus">Payment status</label>
-            <select id="detailsPaymentStatus">
-              <option value="deposit">Deposit only</option>
-              <option value="paid">Fully paid</option>
+            <label for="paymentType">Payment type</label>
+            <select id="paymentType">
+              <option value="downpayment">Downpayment</option>
+              <option value="balance">Balance payment</option>
+              <option value="other">Other</option>
             </select>
           </div>
         </div>
+        <div class="field-row">
+          <div>
+            <label for="paymentMethod">Payment method</label>
+            <select id="paymentMethod">
+              <option value="cash">Cash</option>
+              <option value="gcash">GCash</option>
+              <option value="bank_transfer">Bank transfer</option>
+              <option value="card">Card</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="paymentDate">Date</label>
+            <input type="date" id="paymentDate">
+          </div>
+        </div>
+        <div class="field">
+          <label for="paymentReference">Reference number (optional)</label>
+          <input type="text" id="paymentReference" placeholder="e.g. GCash ref, receipt #">
+        </div>
         <div class="editor-actions">
           <button type="button" class="cancel-mini-btn" onclick="togglePaymentEditor(false)">Cancel</button>
-          <button type="button" class="save-btn" onclick="savePaymentFromDetails()">Save payment</button>
+          <button type="button" class="save-btn" onclick="addPaymentFromDetails()">Add payment</button>
         </div>
       </div>
 
@@ -2073,6 +2193,73 @@ function migrateBooking(b){
   }
   if(b.actualCheckIn === undefined) b.actualCheckIn = null;
   if(b.pax === undefined || b.pax === null || b.pax === '') b.pax = 1;
+  ensureExtras(b);
+  recomputePaymentTotals(b);
+  return b;
+}
+
+/* ---------------- Payment history helpers ----------------
+   A booking's `payments` array is now the single source of truth for
+   how much has been collected. `amountPaid` and `status` are always
+   derived from it (see recomputePaymentTotals), never edited directly. */
+
+const PAYMENT_TYPE_LABELS = { downpayment:'Downpayment', balance:'Balance payment', other:'Other' };
+const PAYMENT_METHOD_LABELS = { cash:'Cash', gcash:'GCash', bank_transfer:'Bank transfer', card:'Card', other:'Other', unspecified:'Not specified' };
+
+function paymentTypeLabel(t){ return PAYMENT_TYPE_LABELS[t] || 'Other'; }
+function paymentMethodLabel(m){ return PAYMENT_METHOD_LABELS[m] || (m ? m : 'Not specified'); }
+
+/* Ensures every booking has a payments array, migrating any older
+   booking that only ever had a manually-set amountPaid into a single
+   legacy payment record so no historical collections data is lost. */
+function ensurePayments(b){
+  if(!Array.isArray(b.payments)){
+    b.payments = (Number(b.amountPaid) > 0) ? [{
+      id: 'legacy-' + b.id,
+      amount: Number(b.amountPaid) || 0,
+      type: 'other',
+      method: 'unspecified',
+      date: (b.createdAt || new Date().toISOString()).slice(0,10),
+      reference: '',
+      createdAt: b.createdAt || new Date().toISOString()
+    }] : [];
+  }
+  return b.payments;
+}
+
+/* Ensures every booking has an extras array (surprise items, add-ons the
+   guest requests mid-stay — each with a description and an amount that
+   gets added on top of the base room total). */
+function ensureExtras(b){
+  if(!Array.isArray(b.extras)) b.extras = [];
+  return b.extras;
+}
+function extrasTotal(b){
+  ensureExtras(b);
+  return b.extras.reduce((s,x)=> s + (Number(x.amount)||0), 0);
+}
+/* The real amount owed for a booking = base room/booking total + any
+   additional items. Everything that shows or calculates against a
+   booking's "total" (balance, status, tables, summary) should use this,
+   not the raw b.total field, which only holds the base room rate. */
+function effectiveTotal(b){
+  return (Number(b.total)||0) + extrasTotal(b);
+}
+
+function computeAutoStatus(total, deposit, paid){
+  if(total>0 && paid>=total) return 'paid';
+  if(deposit>0 && paid>0 && paid<total) return (paid<deposit) ? 'deposit' : 'partial';
+  if(paid>0) return 'partial';
+  return 'unpaid';
+}
+
+/* Recalculates amountPaid + status from the payment history — call this
+   any time payments are added, edited, or removed. */
+function recomputePaymentTotals(b){
+  ensurePayments(b);
+  ensureExtras(b);
+  b.amountPaid = b.payments.reduce((s,p)=> s + (Number(p.amount)||0), 0);
+  b.status = computeAutoStatus(effectiveTotal(b), Number(b.deposit)||0, b.amountPaid);
   return b;
 }
 
@@ -2305,7 +2492,7 @@ function renderSummary(){
     const nightsHere = nightsInMonth(b, year, month);
     const proportion = nightsHere / nightsTotal;
     collected += b.amountPaid * proportion;
-    outstanding += Math.max(0, b.total - b.amountPaid) * proportion;
+    outstanding += Math.max(0, effectiveTotal(b) - b.amountPaid) * proportion;
     if(b.status === 'deposit' || b.status === 'partial') deposits += Math.min(b.deposit, b.amountPaid) * proportion;
     else if(b.deposit > 0 && b.status !== 'paid') deposits += Math.min(b.deposit,b.amountPaid) * proportion;
     occupiedNights += nightsHere;
@@ -2379,13 +2566,14 @@ function renderTable(){
   }
 
   tbody.innerHTML = monthBookings.map(b=>{
-    const balance = Math.max(0, b.total - b.amountPaid);
+    const grandTotal = effectiveTotal(b);
+    const balance = Math.max(0, grandTotal - b.amountPaid);
     return `
       <tr onclick="openBookingDetails('${b.id}')" style="cursor:pointer;">
         <td><span class="temporal-dot" style="background:${getStatusColor(b)}"></span><strong>${escapeHtml(b.guest)}</strong>${b.phone ? `<div style="font-size:11px;color:var(--text-muted);margin-left:12px;">${escapeHtml(b.phone)}</div>`:''}</td>
         <td class="mono">${formatShort(b.checkIn)} → ${formatShort(b.checkOut)} <span style="color:var(--text-muted)">${formatTime(b.checkOutTime)}</span></td>
         <td><span class="badge status-${b.status}">${statusLabel(b.status)}</span></td>
-        <td class="mono">${formatPHP(b.total)}</td>
+        <td class="mono">${formatPHP(grandTotal)}</td>
         <td class="mono">${formatPHP(b.amountPaid)}</td>
         <td class="mono">${formatPHP(balance)}</td>
         <td onclick="event.stopPropagation()">
@@ -2471,7 +2659,8 @@ function renderExistingForDate(dateStr){
   }
   document.getElementById('existingBookingsWrap').style.display = 'block';
   wrap.innerHTML = dayBookings.map(b=>{
-    const balance = Math.max(0, b.total - b.amountPaid);
+    const grandTotal = effectiveTotal(b);
+    const balance = Math.max(0, grandTotal - b.amountPaid);
     const checkedOut = !!b.checkedOut;
     const checkedIn = !!b.checkedIn;
 
@@ -2501,7 +2690,7 @@ function renderExistingForDate(dateStr){
           <span class="badge status-${b.status}">${statusLabel(b.status)}</span>
         </div>
         <div class="dates">${formatShort(b.checkIn)} ${formatTime(b.checkInTime)} → ${formatShort(b.checkOut)} ${formatTime(b.checkOutTime)} · ${nightsBetween(b.checkIn,b.checkOut)} night(s)</div>
-        <div class="money-row"><span>Total</span><b>${formatPHP(b.total)}</b></div>
+        <div class="money-row"><span>Total</span><b>${formatPHP(grandTotal)}</b></div>
         <div class="money-row"><span>Paid</span><b>${formatPHP(b.amountPaid)}</b></div>
         <div class="money-row"><span>Balance</span><b>${formatPHP(balance)}</b></div>
         ${stayInfo}
@@ -2580,7 +2769,10 @@ function deleteBooking(id){
 let detailsBookingId = null;
 
 function renderBookingDetailsModal(b){
-  const balance = Math.max(0, b.total - b.amountPaid);
+  ensureExtras(b);
+  const grandTotal = effectiveTotal(b);
+  const extrasSum = extrasTotal(b);
+  const balance = Math.max(0, grandTotal - b.amountPaid);
   const nights = nightsBetween(b.checkIn, b.checkOut);
   const checkedIn = !!b.checkedIn;
   const checkedOut = !!b.checkedOut;
@@ -2605,10 +2797,15 @@ function renderBookingDetailsModal(b){
     <div class="details-stat"><div class="label">Check-out</div><div class="value">${formatShort(b.checkOut)}</div><div class="sub">${formatTime(b.checkOutTime)}</div></div>
   `;
 
-  document.getElementById('detailsTotal').textContent = formatPHP(b.total);
+  const hasExtras = b.extras.length > 0;
+  document.getElementById('detailsRoomTotalRow').style.display = hasExtras ? 'flex' : 'none';
+  document.getElementById('detailsExtrasRow').style.display = hasExtras ? 'flex' : 'none';
+  document.getElementById('detailsRoomTotal').textContent = formatPHP(b.total);
+  document.getElementById('detailsExtrasTotal').textContent = formatPHP(extrasSum);
+  document.getElementById('detailsTotal').textContent = formatPHP(grandTotal);
   document.getElementById('detailsPaid').textContent = formatPHP(b.amountPaid);
   document.getElementById('detailsBalance').textContent = formatPHP(balance);
-  document.getElementById('detailsBalanceRow').classList.toggle('settled', balance<=0 && b.total>0);
+  document.getElementById('detailsBalanceRow').classList.toggle('settled', balance<=0 && grandTotal>0);
 
   const notesWrap = document.getElementById('detailsNotesWrap');
   if(b.notes){
@@ -2618,8 +2815,8 @@ function renderBookingDetailsModal(b){
     notesWrap.style.display = 'none';
   }
 
-  document.getElementById('detailsAmountPaid').value = b.amountPaid;
-  document.getElementById('detailsPaymentStatus').value = b.status;
+  renderExtrasList(b);
+  renderPaymentHistory(b);
 
   const checkInBtn = document.getElementById('detailsCheckInBtn');
   const checkOutBtn = document.getElementById('detailsCheckOutBtn');
@@ -2652,26 +2849,173 @@ function togglePaymentEditor(force){
   const editor = document.getElementById('detailsPaymentEditor');
   const show = typeof force === 'boolean' ? force : !editor.classList.contains('show');
   editor.classList.toggle('show', show);
-  if(show && detailsBookingId){
-    const b = bookings.find(x=>x.id===detailsBookingId);
-    if(b){
-      document.getElementById('detailsAmountPaid').value = b.amountPaid;
-      document.getElementById('detailsPaymentStatus').value = b.status;
-    }
+  if(show){
+    document.getElementById('paymentAmount').value = '';
+    document.getElementById('paymentType').value = 'downpayment';
+    document.getElementById('paymentMethod').value = 'cash';
+    document.getElementById('paymentDate').value = todayStr();
+    document.getElementById('paymentReference').value = '';
   }
 }
 
-function savePaymentFromDetails(){
+/* Renders the read-only list of payments recorded for a booking, most
+   recent first. Each entry can be individually removed (e.g. to correct
+   a mistake), which re-derives amountPaid/balance/status automatically. */
+function renderPaymentHistory(b){
+  const wrap = document.getElementById('detailsPaymentHistory');
+  ensurePayments(b);
+  if(!b.payments.length){
+    wrap.innerHTML = `<div class="payment-history-empty">No payments recorded yet.</div>`;
+    return;
+  }
+  const sorted = [...b.payments].sort((a,z)=>
+    (z.date||'').localeCompare(a.date||'') || (z.createdAt||'').localeCompare(a.createdAt||'')
+  );
+  wrap.innerHTML = `<div class="payment-history-list">` + sorted.map(p => `
+    <div class="payment-history-item">
+      <div class="ph-main">
+        <div class="ph-tags">
+          <span class="ph-type ${escapeHtml(p.type||'other')}">${escapeHtml(paymentTypeLabel(p.type))}</span>
+          <span class="ph-method">${escapeHtml(paymentMethodLabel(p.method))}</span>
+        </div>
+        <div class="ph-date">${formatShort(p.date)}${p.reference ? ' · Ref: ' + escapeHtml(p.reference) : ''}</div>
+      </div>
+      <div class="ph-right">
+        <span class="ph-amount">${formatPHP(p.amount)}</span>
+        <button type="button" class="ph-del" title="Delete payment" onclick="deletePaymentEntry('${b.id}','${p.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('') + `</div>`;
+}
+
+function addPaymentFromDetails(){
   const b = bookings.find(x=>x.id===detailsBookingId);
   if(!b) return;
-  b.amountPaid = Math.max(0, Number(document.getElementById('detailsAmountPaid').value) || 0);
-  b.status = document.getElementById('detailsPaymentStatus').value;
+  const amount = Number(document.getElementById('paymentAmount').value) || 0;
+  if(amount <= 0){
+    appAlert('Enter a payment amount greater than zero.', { title:'Invalid amount', danger:true });
+    return;
+  }
+  ensurePayments(b);
+  b.payments.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+    amount,
+    type: document.getElementById('paymentType').value,
+    method: document.getElementById('paymentMethod').value,
+    date: document.getElementById('paymentDate').value || todayStr(),
+    reference: document.getElementById('paymentReference').value.trim(),
+    createdAt: new Date().toISOString()
+  });
+  recomputePaymentTotals(b);
   b.updatedAt = new Date().toISOString();
   persistBookings();
   renderAll();
   if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
   renderBookingDetailsModal(b);
   togglePaymentEditor(false);
+}
+
+function deletePaymentEntry(bookingId, paymentId){
+  const b = bookings.find(x=>x.id===bookingId);
+  if(!b) return;
+  appConfirm('Delete this payment record?', { title:'Delete payment', okText:'Delete', cancelText:'Keep', danger:true }).then(ok=>{
+    if(!ok) return;
+    ensurePayments(b);
+    b.payments = b.payments.filter(p=>p.id!==paymentId);
+    recomputePaymentTotals(b);
+    b.updatedAt = new Date().toISOString();
+    persistBookings();
+    renderAll();
+    if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+    if(detailsBookingId===bookingId) renderBookingDetailsModal(b);
+  });
+}
+
+/* ---------------- Additional items (extras) ----------------
+   Surprise / add-on items the guest wants mid-stay (extra pillow, a rented
+   item, a late checkout fee, etc). Each has just a description and an
+   amount; the sum is folded straight into the booking's total via
+   effectiveTotal(), which balance/status/tables all read from. */
+
+function toggleExtraEditor(force){
+  const editor = document.getElementById('detailsExtraEditor');
+  const show = typeof force === 'boolean' ? force : !editor.classList.contains('show');
+  editor.classList.toggle('show', show);
+  if(show){
+    document.getElementById('extraDescription').value = '';
+    document.getElementById('extraAmount').value = '';
+  }
+}
+
+function renderExtrasList(b){
+  const wrap = document.getElementById('detailsExtrasList');
+  ensureExtras(b);
+  if(!b.extras.length){
+    wrap.innerHTML = `<div class="payment-history-empty">No additional items yet.</div>`;
+    return;
+  }
+  const sorted = [...b.extras].sort((a,z)=> (z.createdAt||'').localeCompare(a.createdAt||''));
+  wrap.innerHTML = `<div class="payment-history-list">` + sorted.map(x => `
+    <div class="payment-history-item">
+      <div class="ph-main">
+        <div class="ph-desc">${escapeHtml(x.description || 'Additional item')}</div>
+        <div class="ph-date">Added ${formatShort((x.createdAt||'').slice(0,10))}</div>
+      </div>
+      <div class="ph-right">
+        <span class="ph-amount">${formatPHP(x.amount)}</span>
+        <button type="button" class="ph-del" title="Remove item" onclick="deleteExtraEntry('${b.id}','${x.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('') + `</div>`;
+}
+
+function addExtraFromDetails(){
+  const b = bookings.find(x=>x.id===detailsBookingId);
+  if(!b) return;
+  const description = document.getElementById('extraDescription').value.trim();
+  const amount = Number(document.getElementById('extraAmount').value) || 0;
+  if(!description){
+    appAlert('Enter a short description for this item.', { title:'Missing description', danger:true });
+    return;
+  }
+  if(amount <= 0){
+    appAlert('Enter an amount greater than zero.', { title:'Invalid amount', danger:true });
+    return;
+  }
+  ensureExtras(b);
+  b.extras.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+    description,
+    amount,
+    createdAt: new Date().toISOString()
+  });
+  recomputePaymentTotals(b); // total changed, so status/balance need a refresh too
+  b.updatedAt = new Date().toISOString();
+  persistBookings();
+  renderAll();
+  if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+  renderBookingDetailsModal(b);
+  toggleExtraEditor(false);
+}
+
+function deleteExtraEntry(bookingId, extraId){
+  const b = bookings.find(x=>x.id===bookingId);
+  if(!b) return;
+  appConfirm('Remove this additional item?', { title:'Remove item', okText:'Remove', cancelText:'Keep', danger:true }).then(ok=>{
+    if(!ok) return;
+    ensureExtras(b);
+    b.extras = b.extras.filter(x=>x.id!==extraId);
+    recomputePaymentTotals(b);
+    b.updatedAt = new Date().toISOString();
+    persistBookings();
+    renderAll();
+    if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+    if(detailsBookingId===bookingId) renderBookingDetailsModal(b);
+  });
 }
 
 function detailsCheckIn(){
@@ -2703,27 +3047,27 @@ function detailsEdit(){
   openEditForBooking(detailsBookingId);
 }
 
+/* Amount paid & payment status are derived entirely from the booking's
+   payment history (see recomputePaymentTotals) — this just refreshes the
+   read-only display and the balance box whenever total/deposit change,
+   or when a booking is loaded into the form for editing. */
 function recalcBalance(){
   const total = Number(document.getElementById('totalAmount').value)||0;
-  const paid = Number(document.getElementById('amountPaid').value)||0;
-  const balance = Math.max(0, total-paid);
+  const deposit = Number(document.getElementById('depositAmount').value)||0;
+  const id = document.getElementById('bookingId').value;
+  const existing = id ? bookings.find(b=>b.id===id) : null;
+  const paid = existing ? (Number(existing.amountPaid)||0) : 0;
+  const extras = existing ? extrasTotal(existing) : 0;
+  const grandTotal = total + extras;
+
+  document.getElementById('amountPaid').value = paid;
+  document.getElementById('paymentStatus').value = computeAutoStatus(grandTotal, deposit, paid);
+
+  const balance = Math.max(0, grandTotal-paid);
   const box = document.getElementById('balanceBox');
   document.getElementById('balanceValue').textContent = formatPHP(balance);
-  box.classList.toggle('settled', balance<=0 && total>0);
-
-  // auto-suggest status based on amounts, but don't override a manual paid selection unnecessarily
-  const deposit = Number(document.getElementById('depositAmount').value)||0;
-  const statusSelect = document.getElementById('paymentStatus');
-  if(!statusSelect.dataset.userSet){
-    if(total>0 && paid>=total) statusSelect.value='paid';
-    else if(deposit>0 && paid>0 && paid<total) statusSelect.value = (paid<deposit) ? 'deposit' : 'partial';
-    else if(paid>0) statusSelect.value='partial';
-    else statusSelect.value='unpaid';
-  }
+  box.classList.toggle('settled', balance<=0 && grandTotal>0);
 }
-document.getElementById('paymentStatus').addEventListener('change', function(){
-  this.dataset.userSet = '1';
-});
 
 function saveBooking(e){
   e.preventDefault();
@@ -2736,6 +3080,8 @@ function saveBooking(e){
     return;
   }
 
+  const existing = id ? bookings.find(b=>b.id===id) : null;
+
   const record = {
     id: id || (Date.now().toString(36) + Math.random().toString(36).slice(2,7)),
     guest: document.getElementById('guestName').value.trim(),
@@ -2746,16 +3092,18 @@ function saveBooking(e){
     checkOutTime: document.getElementById('checkOutTime').value || '11:00',
     total: Number(document.getElementById('totalAmount').value)||0,
     deposit: Number(document.getElementById('depositAmount').value)||0,
-    amountPaid: Number(document.getElementById('amountPaid').value)||0,
-    status: document.getElementById('paymentStatus').value,
+    // amountPaid/status are never set directly — they're always derived
+    // from the payment history a few lines down (recomputePaymentTotals).
+    payments: existing ? (existing.payments || []) : [],
+    extras: existing ? (existing.extras || []) : [],
     notes: document.getElementById('notes').value.trim(),
-    createdAt: id ? (bookings.find(b=>b.id===id)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+    createdAt: existing ? (existing.createdAt || new Date().toISOString()) : new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+  recomputePaymentTotals(record);
 
   // Preserve check-out status when editing; if the (possibly new) schedule
   // now falls in the future, treat the guest as not-yet-checked-out again.
-  const existing = id ? bookings.find(b=>b.id===id) : null;
   const stillFuture = isCheckoutInFuture(record.checkOut, record.checkOutTime);
   if(stillFuture){
     record.checkedOut = false;
@@ -2786,7 +3134,6 @@ function saveBooking(e){
     bookings.push(record);
   }
   persistBookings();
-  document.getElementById('paymentStatus').dataset.userSet = '';
   resetForm(activeDrawerDate);
   renderExistingForDate(activeDrawerDate);
   renderAll();
