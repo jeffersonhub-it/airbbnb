@@ -289,6 +289,22 @@
   .today-chip .name{ font-weight:600; color:var(--ink); }
   .today-chip .time{ font-family:'JetBrains Mono', monospace; color:var(--text-muted); }
 
+  /* LIVE (currently checked-in) chip — stays visible for the guest's whole
+     stay, not just on the exact departure day, so check-out info (date,
+     time, countdown) is always at a glance in case the guest leaves early. */
+  .today-chip.live-now{ border-color: rgba(189,81,56,0.35); }
+  .today-chip.live-now .tag{
+    background:var(--status-checkin-soft);
+    color:#8A2E1A;
+    animation: pillLivePop 1.6s ease-in-out infinite;
+  }
+  .today-chip .checkout-info{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  .today-chip .checkout-info b{ color:var(--ink); font-weight:700; }
+
   /* ---------- Checkout alarm popup ---------- */
   .alarm-overlay{
     position:fixed; inset:0;
@@ -816,6 +832,38 @@
   @keyframes pillLivePop{
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.045); }
+  }
+
+  /* Once a guest has checked out, mute their entry on the calendar date:
+     the pill itself is greyed and the guest description text fades and
+     softly blurs, so past stays visually recede behind live/upcoming ones. */
+  .pill .pill-desc{ display:inline; filter:none; opacity:1; transition: filter .5s ease, opacity .5s ease; }
+  .pill.pill-past{
+    background: var(--temporal-past-soft) !important;
+    color: var(--temporal-past) !important;
+    animation: none !important;
+    border: 1px dashed var(--border);
+  }
+  .pill.pill-past .arrow{ opacity:.5; }
+  .pill.pill-past .pill-desc{
+    filter: blur(1.2px);
+    opacity:.6;
+  }
+  .pill.pill-past-fade-in{ animation: pillPastFadeIn .9s ease both; }
+  .pill.pill-past-fade-in .pill-desc{ animation: pillDescFadeBlur .9s ease both; }
+  @keyframes pillPastFadeIn{
+    0%{ opacity:1; }
+    100%{ opacity:.85; }
+  }
+  @keyframes pillDescFadeBlur{
+    0%{ filter:blur(0); opacity:1; }
+    100%{ filter:blur(1.2px); opacity:.6; }
+  }
+
+  .day-dots .ddot.ddot-past{
+    filter: grayscale(0.6) blur(0.3px);
+    opacity:.55;
+    background: var(--temporal-past) !important;
   }
 
   .pill-more{
@@ -1375,6 +1423,70 @@
     padding:8px 14px; border-radius:999px; font-size:12.5px;
     font-weight:600; color:var(--ink-soft); cursor:pointer;
   }
+
+  /* ---------------- In-app dialog (replaces native alert/confirm) ---------------- */
+  .app-dialog-overlay{
+    position:fixed; inset:0; z-index:200;
+    background:rgba(18,49,43,0.42);
+    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    opacity:0; pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .app-dialog-overlay.show{ opacity:1; pointer-events:auto; }
+  .app-dialog{
+    width:100%; max-width:380px;
+    background:var(--paper);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    border:1px solid var(--border-soft);
+    padding:22px 22px 18px;
+    transform:translateY(8px) scale(.97);
+    opacity:0;
+    transition:transform .2s cubic-bezier(.2,.9,.3,1.2), opacity .18s ease;
+  }
+  .app-dialog-overlay.show .app-dialog{ transform:translateY(0) scale(1); opacity:1; }
+  .app-dialog-icon{
+    width:42px; height:42px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:12px;
+    background:var(--info-soft); color:var(--info);
+  }
+  .app-dialog-icon svg{ width:22px; height:22px; }
+  .app-dialog-overlay.danger .app-dialog-icon{ background:var(--danger-soft); color:var(--danger); }
+  .app-dialog-title{
+    font-family:'Fraunces', serif; font-size:18px; font-weight:600;
+    color:var(--ink); margin-bottom:6px; line-height:1.3;
+  }
+  .app-dialog-message{
+    font-size:14px; color:var(--ink-soft); line-height:1.5;
+    white-space:pre-line;
+  }
+  .app-dialog-actions{
+    display:flex; gap:10px; margin-top:20px;
+  }
+  .app-dialog-actions button{
+    flex:1; padding:11px 14px; border-radius:999px;
+    font-size:13.5px; font-weight:600; font-family:inherit;
+    cursor:pointer; border:1px solid transparent;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .app-dialog-actions button:active{ transform:scale(.97); }
+  .app-dialog-btn-cancel{
+    background:var(--paper-soft); color:var(--ink-soft);
+    border:1px solid var(--border) !important;
+  }
+  .app-dialog-btn-cancel:hover{ background:var(--border-soft); }
+  .app-dialog-btn-ok{
+    background:var(--primary); color:#fff;
+  }
+  .app-dialog-btn-ok:hover{ background:var(--primary-dark); }
+  .app-dialog-overlay.danger .app-dialog-btn-ok{ background:var(--danger); }
+  .app-dialog-overlay.danger .app-dialog-btn-ok:hover{ background:#9E4029; }
+  @media (max-width:480px){
+    .app-dialog{ max-width:100%; }
+  }
 </style>
 </head>
 <body>
@@ -1438,6 +1550,21 @@
   </div>
 </div>
 <button class="fb-signout" id="fbSignOutBtn" style="display:none;" onclick="window.__fbSignOut()">Sign out</button>
+
+<!-- In-app dialog: replaces native browser alert()/confirm() popups so every
+     prompt/question (check-in, check-out, delete, validation, etc.) is a
+     custom, on-brand UI rendered inside this page — not a browser/OS dialog. -->
+<div class="app-dialog-overlay" id="appDialogOverlay" aria-hidden="true">
+  <div class="app-dialog" role="alertdialog" aria-modal="true" aria-labelledby="appDialogTitle" aria-describedby="appDialogMessage">
+    <div class="app-dialog-icon" id="appDialogIcon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    </div>
+    <div class="app-dialog-title" id="appDialogTitle"></div>
+    <div class="app-dialog-message" id="appDialogMessage"></div>
+    <div class="app-dialog-actions" id="appDialogActions"></div>
+  </div>
+</div>
+
 
 <div class="page-bg" aria-hidden="true">
   <div class="mesh-layer"><i class="m1"></i><i class="m2"></i><i class="m3"></i></div>
@@ -1731,6 +1858,7 @@ const STORAGE_KEY = 'casa_ledger_bookings_v1'; // local cache only, cloud is the
 const FS_DOC_PATH = ['businesses', 'casaLedger']; // Firestore doc: businesses/casaLedger
 let bookings = [];
 let viewDate = new Date(); // month currently displayed
+let pastFadeAnimated = new Set(); // booking ids already shown the checked-out fade-in once
 let activeDrawerDate = null;
 let fsDocRef = null;
 let fsReady = false;       // becomes true once the first cloud snapshot has arrived
@@ -1760,7 +1888,7 @@ async function persistBookings(){
     await window.__fb.setDoc(fsDocRef, { bookings, updatedAt: new Date().toISOString() }, { merge:true });
   }catch(e){
     console.warn('Could not sync bookings to Firebase.', e);
-    alert('Hindi na-save online (baka walang internet). Naka-save muna sa device na ito, susubukan ulit mag-sync.');
+    appAlert('Hindi na-save online (baka walang internet). Naka-save muna sa device na ito, susubukan ulit mag-sync.', { title:'Sync issue', danger:true });
   }finally{
     fsSaving = false;
   }
@@ -1791,6 +1919,81 @@ function startCloudSync(){
 }
 
 function pad(n){ return n.toString().padStart(2,'0'); }
+
+/* ---------------- In-app dialog helpers ---------------- */
+/* Custom replacements for window.alert()/confirm() so every prompt/question
+   in the app (check-in, check-out, delete, validation, etc.) renders as an
+   in-page modal styled to match the app — never a native browser popup. */
+const ICON_INFO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+const ICON_WARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+const ICON_QUESTION = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+
+let _appDialogResolver = null;
+
+function _closeAppDialog(result){
+  const overlay = document.getElementById('appDialogOverlay');
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+  if(_appDialogResolver){ const r = _appDialogResolver; _appDialogResolver = null; r(result); }
+}
+
+function _openAppDialog({ title, message, icon, danger, buttons }){
+  const overlay = document.getElementById('appDialogOverlay');
+  document.getElementById('appDialogTitle').textContent = title;
+  document.getElementById('appDialogMessage').textContent = message;
+  document.getElementById('appDialogIcon').innerHTML = icon;
+  overlay.classList.toggle('danger', !!danger);
+
+  const actions = document.getElementById('appDialogActions');
+  actions.innerHTML = '';
+  buttons.forEach(btnDef=>{
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = btnDef.className;
+    btn.textContent = btnDef.label;
+    btn.onclick = () => _closeAppDialog(btnDef.value);
+    actions.appendChild(btn);
+  });
+
+  overlay.setAttribute('aria-hidden','false');
+  overlay.classList.add('show');
+  requestAnimationFrame(()=>{ (buttons[buttons.length-1] && actions.lastChild || actions.firstChild)?.focus?.(); });
+
+  return new Promise(resolve => { _appDialogResolver = resolve; });
+}
+
+/* Replacement for window.alert(message) — resolves once the guest dismisses it. */
+function appAlert(message, opts={}){
+  return _openAppDialog({
+    title: opts.title || 'Notice',
+    message,
+    icon: opts.icon || ICON_INFO,
+    danger: !!opts.danger,
+    buttons: [{ label: opts.okText || 'OK', className: 'app-dialog-btn-ok', value: true }]
+  });
+}
+
+/* Replacement for window.confirm(message) — resolves true/false. */
+function appConfirm(message, opts={}){
+  return _openAppDialog({
+    title: opts.title || 'Please confirm',
+    message,
+    icon: opts.icon || (opts.danger ? ICON_WARN : ICON_QUESTION),
+    danger: !!opts.danger,
+    buttons: [
+      { label: opts.cancelText || 'Cancel', className: 'app-dialog-btn-cancel', value: false },
+      { label: opts.okText || 'Confirm', className: 'app-dialog-btn-ok', value: true }
+    ]
+  });
+}
+
+document.getElementById('appDialogOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'appDialogOverlay') _closeAppDialog(false);
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && document.getElementById('appDialogOverlay').classList.contains('show')) _closeAppDialog(false);
+});
+
 function toDateStr(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function todayStr(){ return toDateStr(new Date()); }
 function parseDate(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
@@ -1809,36 +2012,32 @@ function overlapsDate(booking, dateStr){
   return dateStr >= booking.checkIn && dateStr < booking.checkOut;
 }
 
-/* Is this booking live RIGHT NOW, purely based on the clock — current
-   moment falls between the scheduled check-in and check-out date+time.
-   Independent of the manual "Start stay" (checkedIn) flag. */
-function isLiveNow(booking){
-  if(booking.checkedOut) return false;
-  const now = new Date();
-  const start = parseDate(booking.checkIn);
-  const [ih, im] = (booking.checkInTime || '14:00').split(':').map(Number);
-  start.setHours(ih, im, 0, 0);
-  const end = parseDate(booking.checkOut);
-  const [oh, om] = (booking.checkOutTime || '11:00').split(':').map(Number);
-  end.setHours(oh, om, 0, 0);
-  return now >= start && now < end;
+/* A booking is "LIVE" (red) ONLY once the host manually presses the
+   Check-in button (Start stay) — never automatically based on the clock —
+   and it stays live until it's checked out. This is the single switch that
+   turns the dot/pill from yellow/blue → red, and then → gray once checked out. */
+function isLiveGuest(booking){
+  return !!booking.checkedIn && !booking.checkedOut;
 }
 
-/* Unified status-color rule (only 2 states for a not-yet-live advance
-   booking, plus 1 for a currently live stay — no separate "reserved" color):
-     LIVE (currently checked in, right now)      → RED
-     Advance booking, fully PAID                 → YELLOW
-     Advance booking, DOWNPAYMENT (unpaid/deposit/partial) → BLUE */
+/* Unified status-color rule:
+     Reserved/booked, fully PAID                      → YELLOW
+     Reserved/booked, DOWNPAYMENT (unpaid/deposit/partial) → BLUE
+     Checked in (Check-in button pressed), in-house    → RED
+     Checked out                                       → GRAY (faded) */
 function getStatusColor(b){
-  if(isLiveNow(b)) return 'var(--status-checkin)';
+  if(b.checkedOut) return 'var(--temporal-past)';
+  if(isLiveGuest(b)) return 'var(--status-checkin)';
   return b.status === 'paid' ? 'var(--status-paid)' : 'var(--status-downpayment)';
 }
 function getStatusColorSoft(b){
-  if(isLiveNow(b)) return 'var(--status-checkin-soft)';
+  if(b.checkedOut) return 'var(--temporal-past-soft)';
+  if(isLiveGuest(b)) return 'var(--status-checkin-soft)';
   return b.status === 'paid' ? 'var(--status-paid-soft)' : 'var(--status-downpayment-soft)';
 }
 function getStatusTextColor(b){
-  if(isLiveNow(b)) return '#8A2E1A';
+  if(b.checkedOut) return '#6B6659';
+  if(isLiveGuest(b)) return '#8A2E1A';
   return b.status === 'paid' ? '#7A5B12' : '#2B5578';
 }
 
@@ -1898,15 +2097,17 @@ function startStay(id){
   if(!b) return;
   if(b.checkedIn) return;
   if(b.checkIn > todayStr()){
-    alert(`Hindi pa pwedeng i-start ang stay ni ${b.guest}. Naka-schedule ang check-in sa ${formatShort(b.checkIn)}.`);
+    appAlert(`Hindi pa pwedeng i-start ang stay ni ${b.guest}. Naka-schedule ang check-in sa ${formatShort(b.checkIn)}.`, { title:'Not yet check-in day' });
     return;
   }
-  if(!confirm(`Simulan (check in) ang stay ni ${b.guest} ngayon?`)) return;
-  b.checkedIn = true;
-  b.actualCheckIn = new Date().toISOString();
-  persistBookings();
-  renderAll();
-  if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+  appConfirm(`Simulan (check in) ang stay ni ${b.guest} ngayon?`, { title:'Check in guest', okText:'Check in' }).then(ok=>{
+    if(!ok) return;
+    b.checkedIn = true;
+    b.actualCheckIn = new Date().toISOString();
+    persistBookings();
+    renderAll();
+    if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+  });
 }
 
 /* Manual early check-out — guest is leaving ahead of the scheduled time */
@@ -1914,13 +2115,15 @@ function checkOutNow(id){
   const b = bookings.find(x=>x.id===id);
   if(!b) return;
   if(b.checkedOut){ return; }
-  if(!confirm(`Mark ${b.guest} as checked out now?`)) return;
-  b.checkedOut = true;
-  b.actualCheckOut = new Date().toISOString();
-  b.checkOutMethod = 'manual';
-  persistBookings();
-  renderAll();
-  if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+  appConfirm(`Mark ${b.guest} as checked out now?`, { title:'Check out guest', okText:'Check out' }).then(ok=>{
+    if(!ok) return;
+    b.checkedOut = true;
+    b.actualCheckOut = new Date().toISOString();
+    b.checkOutMethod = 'manual';
+    persistBookings();
+    renderAll();
+    if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+  });
 }
 
 /* Automatic check-out — runs on a timer and silently flips any booking
@@ -2022,9 +2225,22 @@ function renderCalendar(){
         let marker = '', timeStr = '';
         if(b.checkIn === cellStr){ marker = '→ '; timeStr = formatTime(b.checkInTime); }
         else if(b.checkOut === cellStr){ marker = '← '; timeStr = formatTime(b.checkOutTime); }
-        pill.className = 'pill status-' + b.status + (b.checkOut === cellStr ? ' pill-checkout' : '') + (isLiveNow(b) ? ' pill-live' : '');
+
+        /* Guest has already checked out — grey the pill out and fade/blur
+           its description text so completed stays visually recede. Play a
+           one-time fade-in the first time a booking is rendered as past. */
+        let pastClass = '';
+        if(b.checkedOut){
+          pastClass = ' pill-past';
+          if(!pastFadeAnimated.has(b.id)){
+            pastClass += ' pill-past-fade-in';
+            pastFadeAnimated.add(b.id);
+          }
+        }
+
+        pill.className = 'pill status-' + b.status + (b.checkOut === cellStr ? ' pill-checkout' : '') + (isLiveGuest(b) ? ' pill-live' : '') + pastClass;
         pill.title = timeStr ? `${b.guest} · ${timeStr}` : b.guest;
-        pill.innerHTML = `<span class="temporal-dot" style="background:${getStatusColor(b)}"></span><span class="arrow">${marker}</span>${escapeHtml(b.guest)}${timeStr ? ` <span class="arrow">${timeStr}</span>` : ''}`;
+        pill.innerHTML = `<span class="temporal-dot" style="background:${getStatusColor(b)}"></span><span class="arrow">${marker}</span><span class="pill-desc">${escapeHtml(b.guest)}</span>${timeStr ? ` <span class="arrow">${timeStr}</span>` : ''}`;
         pill.onclick = (e) => { e.stopPropagation(); openBookingDetails(b.id); };
         stack.appendChild(pill);
       });
@@ -2041,9 +2257,9 @@ function renderCalendar(){
       const shownDots = dayBookings.slice(0,4);
       shownDots.forEach(b=>{
         const dot = document.createElement('span');
-        dot.className = 'ddot status-' + b.status;
-        dot.style.background = getStatusColor(b);
-        dot.title = b.guest;
+        dot.className = 'ddot status-' + b.status + (b.checkedOut ? ' ddot-past' : '');
+        if(!b.checkedOut) dot.style.background = getStatusColor(b);
+        dot.title = b.guest + (b.checkedOut ? ' · Checked out' : '');
         dot.textContent = (b.guest || '?').trim().charAt(0).toUpperCase();
         dot.onclick = (e) => { e.stopPropagation(); openBookingDetails(b.id); };
         dots.appendChild(dot);
@@ -2346,11 +2562,13 @@ function editBooking(id){
 function deleteBooking(id){
   const b = bookings.find(x=>x.id===id);
   if(!b) return;
-  if(!confirm(`Delete booking for ${b.guest} (${formatShort(b.checkIn)} → ${formatShort(b.checkOut)})?`)) return;
-  bookings = bookings.filter(x=>x.id!==id);
-  persistBookings();
-  renderAll();
-  if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+  appConfirm(`Delete booking for ${b.guest} (${formatShort(b.checkIn)} → ${formatShort(b.checkOut)})?`, { title:'Delete booking', okText:'Delete', cancelText:'Keep', danger:true }).then(ok=>{
+    if(!ok) return;
+    bookings = bookings.filter(x=>x.id!==id);
+    persistBookings();
+    renderAll();
+    if(activeDrawerDate) renderExistingForDate(activeDrawerDate);
+  });
 }
 
 /* ---------------- Booking Details modal ---------------- */
@@ -2514,7 +2732,7 @@ function saveBooking(e){
   const checkOut = document.getElementById('checkOut').value;
 
   if(checkOut <= checkIn){
-    alert('Check-out date must be after check-in date.');
+    appAlert('Check-out date must be after check-in date.', { title:'Invalid dates', danger:true });
     return;
   }
 
@@ -2578,32 +2796,46 @@ function saveBooking(e){
 
 function renderTodayStrip(){
   const t = todayStr();
-  const arrivals = bookings.filter(b => b.checkIn === t);
-  const departures = bookings.filter(b => b.checkOut === t);
   const strip = document.getElementById('todayStrip');
 
-  if(!arrivals.length && !departures.length){
+  /* ALWAYS show every guest who is currently LIVE (checked in, not yet
+     checked out) here — with their check-out date + time visible — no
+     matter how far off that check-out is (even days away). This way the
+     host can see check-out info anytime, in case a guest ends up leaving
+     earlier than scheduled, instead of it only appearing on the exact
+     departure day. */
+  const liveNow = bookings
+    .filter(b => isLiveGuest(b))
+    .sort((a,b)=> (a.checkOut + (a.checkOutTime||'')).localeCompare(b.checkOut + (b.checkOutTime||'')));
+
+  /* Guests scheduled to arrive today whom the host hasn't pressed
+     Check-in for yet (shows even if their check-in time has already
+     passed, as a reminder). */
+  const upcomingArrivals = bookings
+    .filter(b => b.checkIn === t && !b.checkedOut && !isLiveGuest(b))
+    .sort((a,b)=> (a.checkInTime||'').localeCompare(b.checkInTime||''));
+
+  if(!liveNow.length && !upcomingArrivals.length){
     strip.innerHTML = '';
     return;
   }
 
   const chips = [];
-  const liveDate = formatShort(t);
-  const now = new Date();
-  const nowKey = pad(now.getHours()) + ':' + pad(now.getMinutes());
-  departures.sort((a,b)=> (a.checkOutTime||'').localeCompare(b.checkOutTime||''));
-  arrivals.sort((a,b)=> (a.checkInTime||'').localeCompare(b.checkInTime||''));
 
-  departures.forEach(b=>{
-    chips.push(`<div class="today-chip departure"><span class="tag">LIVE: ${liveDate}</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatCountdown(b.checkOutTime, b.checkOut)}</span></div>`);
+  liveNow.forEach(b=>{
+    const isTodayCheckout = b.checkOut === t;
+    const checkoutLabel = isTodayCheckout
+      ? formatTime(b.checkOutTime)
+      : `${formatShort(b.checkOut)} ${formatTime(b.checkOutTime)}`;
+    chips.push(`<div class="today-chip departure live-now">
+        <span class="tag">LIVE</span>
+        <span class="name">${escapeHtml(b.guest)}</span>
+        <span class="checkout-info">Check-out: <b>${checkoutLabel}</b></span>
+        <span class="time">${formatCountdown(b.checkOutTime, b.checkOut)}</span>
+      </div>`);
   });
-  arrivals.forEach(b=>{
-    const hasArrived = nowKey >= (b.checkInTime || '14:00');
-    if(hasArrived){
-      chips.push(`<div class="today-chip arrival"><span class="tag">LIVE: ${liveDate}</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatCountdown(b.checkOutTime, b.checkOut)}</span></div>`);
-    } else {
-      chips.push(`<div class="today-chip arrival"><span class="tag">Check-in</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatCountdown(b.checkInTime)}</span></div>`);
-    }
+  upcomingArrivals.forEach(b=>{
+    chips.push(`<div class="today-chip arrival"><span class="tag">Check-in</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatCountdown(b.checkInTime)}</span></div>`);
   });
   strip.innerHTML = chips.join('');
 }
