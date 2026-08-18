@@ -25,6 +25,18 @@
     --info-soft:#DCE9F3;
     --danger:#BD5138;
     --danger-soft:#F5DFD7;
+    --temporal-active:#6B5B95;
+    --temporal-active-soft:#E7E1F0;
+    --temporal-past:#8C887E;
+    --temporal-past-soft:#EAE8E2;
+    --status-paid:#E3B23C;
+    --status-paid-soft:#FBF0D2;
+    --status-checkin:#BD5138;
+    --status-checkin-soft:#F5DFD7;
+    --status-checkout:#8C887E;
+    --status-checkout-soft:#EAE8E2;
+    --status-downpayment:#3E76A8;
+    --status-downpayment-soft:#DCE9F3;
     --border:#DDE3D9;
     --border-soft:#E7ECE2;
     --text-muted:#5C6D64;
@@ -715,18 +727,6 @@
     flex-shrink:0;
     margin-right:5px;
   }
-  .temporal-dot.past{
-    background:var(--danger);
-    box-shadow: 0 0 6px 1px rgba(189,81,56,0.55);
-  }
-  .temporal-dot.active{
-    background:var(--success);
-    box-shadow: 0 0 6px 1px rgba(63,143,99,0.55);
-  }
-  .temporal-dot.upcoming{
-    background:var(--gold);
-    box-shadow: 0 0 6px 1px rgba(198,150,58,0.55);
-  }
 
   .weekday-row{
     display:grid;
@@ -803,11 +803,20 @@
     gap:4px;
   }
   .pill .arrow{ opacity:.7; font-weight:400; }
-  .pill.status-unpaid{ background:var(--danger-soft); color:#8B3A26; }
-  .pill.status-deposit{ background:var(--info-soft); color:#2B5578; }
-  .pill.status-partial{ background:var(--warning-soft); color:#8E6A1E; }
-  .pill.status-paid{ background:var(--success-soft); color:#296B47; }
+  .pill.status-unpaid{ background:var(--status-downpayment-soft); color:#2B5578; }
+  .pill.status-deposit{ background:var(--status-downpayment-soft); color:#2B5578; }
+  .pill.status-partial{ background:var(--status-downpayment-soft); color:#2B5578; }
+  .pill.status-paid{ background:var(--status-paid-soft); color:#7A5B12; }
   .pill.pill-checkout{ border:1px dashed rgba(0,0,0,0.15); }
+  .pill.pill-live{
+    background: var(--status-checkin-soft);
+    color: #8A2E1A;
+    animation: pillLivePop 1.4s ease-in-out infinite;
+  }
+  @keyframes pillLivePop{
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.045); }
+  }
 
   .pill-more{
     font-size:10.5px;
@@ -832,14 +841,23 @@
     gap:3px;
   }
   .day-dots .ddot{
-    width:5px; height:5px;
+    width:15px; height:15px;
     border-radius:50%;
     flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:8px;
+    font-weight:700;
+    line-height:1;
+    color:#fff;
+    cursor:pointer;
   }
-  .day-dots .ddot.status-unpaid{ background:var(--danger); }
-  .day-dots .ddot.status-deposit{ background:var(--info); }
-  .day-dots .ddot.status-partial{ background:var(--warning); }
-  .day-dots .ddot.status-paid{ background:var(--success); }
+  .day-dots .ddot.status-unpaid{ background:var(--status-downpayment); }
+  .day-dots .ddot.status-deposit{ background:var(--status-downpayment); }
+  .day-dots .ddot.status-partial{ background:var(--status-downpayment); }
+  .day-dots .ddot.status-paid{ background:var(--status-paid); }
   .day-dots .ddot-more{
     font-size:7.5px;
     line-height:1;
@@ -899,10 +917,10 @@
     text-transform:uppercase;
     letter-spacing:.03em;
   }
-  .badge.status-unpaid{ background:var(--danger-soft); color:#8B3A26; }
-  .badge.status-deposit{ background:var(--info-soft); color:#2B5578; }
-  .badge.status-partial{ background:var(--warning-soft); color:#8E6A1E; }
-  .badge.status-paid{ background:var(--success-soft); color:#296B47; }
+  .badge.status-unpaid{ background:var(--status-downpayment-soft); color:#2B5578; }
+  .badge.status-deposit{ background:var(--status-downpayment-soft); color:#2B5578; }
+  .badge.status-partial{ background:var(--status-downpayment-soft); color:#2B5578; }
+  .badge.status-paid{ background:var(--status-paid-soft); color:#7A5B12; }
 
   .row-actions{ display:flex; gap:6px; }
   .icon-btn{
@@ -1276,14 +1294,12 @@
   @media (max-width:640px){
     .calendar-grid{ gap:3px; }
     .day-cell{
-      min-height:0;
+      min-height:44px;
       height:auto;
-      aspect-ratio: 1 / 1;
-      padding:3px 2px;
+      padding:3px 2px 4px;
       border-radius:8px;
       align-items:center;
       justify-content:flex-start;
-      overflow:hidden;
     }
     .day-num{
       align-self:center;
@@ -1482,22 +1498,16 @@
       </div>
     </div>
 
-    <div class="legend">
-      <span><i class="dot" style="background:var(--danger)"></i> Unpaid</span>
-      <span><i class="dot" style="background:var(--info)"></i> Deposit only</span>
-      <span><i class="dot" style="background:var(--warning)"></i> Partial</span>
-      <span><i class="dot" style="background:var(--success)"></i> Fully paid</span>
-    </div>
-    <div class="temporal-legend">
-      <span><span class="temporal-dot upcoming"></span> Reserved (advance booking, not yet started)</span>
-      <span><span class="temporal-dot active"></span> Checked in / ongoing</span>
-      <span><span class="temporal-dot past"></span> Already checked out</span>
-    </div>
-
     <div class="weekday-row">
       <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
     </div>
     <div class="calendar-grid" id="calendarGrid"></div>
+
+    <div class="legend" id="paymentLegend">
+      <span><span class="dot" style="background:var(--status-checkin)"></span>Live</span>
+      <span><span class="dot" style="background:var(--status-paid)"></span>Paid</span>
+      <span><span class="dot" style="background:var(--status-downpayment)"></span>Downpayment</span>
+    </div>
   </section>
 
   <section class="list-card">
@@ -1507,7 +1517,7 @@
         <thead>
           <tr>
             <th>Guest</th>
-            <th>Check-in ? Check-out</th>
+            <th>Check-in → Check-out</th>
             <th>Status</th>
             <th>Total</th>
             <th>Paid</th>
@@ -1585,26 +1595,24 @@
 
       <div class="field field-row">
         <div>
-          <label for="totalAmount">Total amount (?)</label>
+          <label for="totalAmount">Total amount (₱)</label>
           <input type="number" id="totalAmount" min="0" step="1" required oninput="recalcBalance()">
         </div>
         <div>
-          <label for="depositAmount">Deposit required (?)</label>
+          <label for="depositAmount">Deposit required (₱)</label>
           <input type="number" id="depositAmount" min="0" step="1" value="0" oninput="recalcBalance()">
         </div>
       </div>
 
       <div class="field field-row">
         <div>
-          <label for="amountPaid">Amount paid so far (?)</label>
+          <label for="amountPaid">Amount paid so far (₱)</label>
           <input type="number" id="amountPaid" min="0" step="1" value="0" oninput="recalcBalance()">
         </div>
         <div class="status-select-wrap">
           <label for="paymentStatus">Payment status</label>
           <select id="paymentStatus">
-            <option value="unpaid">Unpaid</option>
             <option value="deposit">Deposit only</option>
-            <option value="partial">Partial</option>
             <option value="paid">Fully paid</option>
           </select>
         </div>
@@ -1612,7 +1620,7 @@
 
       <div class="balance-box" id="balanceBox">
         <span class="label">Balance due</span>
-        <span class="value mono" id="balanceValue">?0</span>
+        <span class="value mono" id="balanceValue">₱0</span>
       </div>
 
       <div class="field">
@@ -1658,9 +1666,9 @@
       <div class="details-stats" id="detailsStats"></div>
 
       <div class="details-money">
-        <div class="details-money-row"><span>Total amount</span><b id="detailsTotal">?0</b></div>
-        <div class="details-money-row"><span>Paid amount</span><b id="detailsPaid">?0</b></div>
-        <div class="details-money-row balance" id="detailsBalanceRow"><span>Remaining balance</span><b id="detailsBalance">?0</b></div>
+        <div class="details-money-row"><span>Total amount</span><b id="detailsTotal">₱0</b></div>
+        <div class="details-money-row"><span>Paid amount</span><b id="detailsPaid">₱0</b></div>
+        <div class="details-money-row balance" id="detailsBalanceRow"><span>Remaining balance</span><b id="detailsBalance">₱0</b></div>
       </div>
 
       <div class="details-notes" id="detailsNotesWrap" style="display:none;">
@@ -1671,15 +1679,13 @@
       <div class="details-payment-editor" id="detailsPaymentEditor">
         <div class="field-row">
           <div>
-            <label for="detailsAmountPaid">Amount paid (?)</label>
+            <label for="detailsAmountPaid">Amount paid (₱)</label>
             <input type="number" id="detailsAmountPaid" min="0" step="1">
           </div>
           <div>
             <label for="detailsPaymentStatus">Payment status</label>
             <select id="detailsPaymentStatus">
-              <option value="unpaid">Unpaid</option>
               <option value="deposit">Deposit only</option>
-              <option value="partial">Partial</option>
               <option value="paid">Fully paid</option>
             </select>
           </div>
@@ -1790,7 +1796,7 @@ function todayStr(){ return toDateStr(new Date()); }
 function parseDate(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
 function formatPHP(n){
   n = Number(n)||0;
-  return '?' + n.toLocaleString('en-PH', {maximumFractionDigits:0});
+  return '₱' + n.toLocaleString('en-PH', {maximumFractionDigits:0});
 }
 function formatDateLong(d){
   return d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
@@ -1801,6 +1807,39 @@ function nightsBetween(inStr,outStr){
 }
 function overlapsDate(booking, dateStr){
   return dateStr >= booking.checkIn && dateStr < booking.checkOut;
+}
+
+/* Is this booking live RIGHT NOW, purely based on the clock — current
+   moment falls between the scheduled check-in and check-out date+time.
+   Independent of the manual "Start stay" (checkedIn) flag. */
+function isLiveNow(booking){
+  if(booking.checkedOut) return false;
+  const now = new Date();
+  const start = parseDate(booking.checkIn);
+  const [ih, im] = (booking.checkInTime || '14:00').split(':').map(Number);
+  start.setHours(ih, im, 0, 0);
+  const end = parseDate(booking.checkOut);
+  const [oh, om] = (booking.checkOutTime || '11:00').split(':').map(Number);
+  end.setHours(oh, om, 0, 0);
+  return now >= start && now < end;
+}
+
+/* Unified status-color rule (only 2 states for a not-yet-live advance
+   booking, plus 1 for a currently live stay — no separate "reserved" color):
+     LIVE (currently checked in, right now)      → RED
+     Advance booking, fully PAID                 → YELLOW
+     Advance booking, DOWNPAYMENT (unpaid/deposit/partial) → BLUE */
+function getStatusColor(b){
+  if(isLiveNow(b)) return 'var(--status-checkin)';
+  return b.status === 'paid' ? 'var(--status-paid)' : 'var(--status-downpayment)';
+}
+function getStatusColorSoft(b){
+  if(isLiveNow(b)) return 'var(--status-checkin-soft)';
+  return b.status === 'paid' ? 'var(--status-paid-soft)' : 'var(--status-downpayment-soft)';
+}
+function getStatusTextColor(b){
+  if(isLiveNow(b)) return '#8A2E1A';
+  return b.status === 'paid' ? '#7A5B12' : '#2B5578';
 }
 
 /* Temporal state — separate from payment status.
@@ -1926,7 +1965,7 @@ function nightsInMonth(booking, year, month){
 }
 
 function statusLabel(s){
-  return {unpaid:'Unpaid', deposit:'Deposit only', partial:'Partial', paid:'Fully paid'}[s] || s;
+  return {unpaid:'Unpaid', deposit:'Deposit', partial:'Partial', paid:'Paid'}[s] || s;
 }
 
 /* ---------------- Rendering: calendar ---------------- */
@@ -1981,12 +2020,11 @@ function renderCalendar(){
       shown.forEach(b=>{
         const pill = document.createElement('div');
         let marker = '', timeStr = '';
-        if(b.checkIn === cellStr){ marker = '? '; timeStr = formatTime(b.checkInTime); }
-        else if(b.checkOut === cellStr){ marker = '? '; timeStr = formatTime(b.checkOutTime); }
-        pill.className = 'pill status-' + b.status + (b.checkOut === cellStr ? ' pill-checkout' : '');
+        if(b.checkIn === cellStr){ marker = '→ '; timeStr = formatTime(b.checkInTime); }
+        else if(b.checkOut === cellStr){ marker = '← '; timeStr = formatTime(b.checkOutTime); }
+        pill.className = 'pill status-' + b.status + (b.checkOut === cellStr ? ' pill-checkout' : '') + (isLiveNow(b) ? ' pill-live' : '');
         pill.title = timeStr ? `${b.guest} · ${timeStr}` : b.guest;
-        const temporal = getTemporalState(b);
-        pill.innerHTML = `<span class="temporal-dot ${temporal}"></span><span class="arrow">${marker}</span>${escapeHtml(b.guest)}${timeStr ? ` <span class="arrow">${timeStr}</span>` : ''}`;
+        pill.innerHTML = `<span class="temporal-dot" style="background:${getStatusColor(b)}"></span><span class="arrow">${marker}</span>${escapeHtml(b.guest)}${timeStr ? ` <span class="arrow">${timeStr}</span>` : ''}`;
         pill.onclick = (e) => { e.stopPropagation(); openBookingDetails(b.id); };
         stack.appendChild(pill);
       });
@@ -2004,7 +2042,10 @@ function renderCalendar(){
       shownDots.forEach(b=>{
         const dot = document.createElement('span');
         dot.className = 'ddot status-' + b.status;
+        dot.style.background = getStatusColor(b);
         dot.title = b.guest;
+        dot.textContent = (b.guest || '?').trim().charAt(0).toUpperCase();
+        dot.onclick = (e) => { e.stopPropagation(); openBookingDetails(b.id); };
         dots.appendChild(dot);
       });
       if(dayBookings.length > 4){
@@ -2061,17 +2102,17 @@ function renderSummary(){
   wrap.innerHTML = `
     <div class="stat-card collected">
       <div class="stat-label">Collected this month</div>
-      <div class="stat-value mono" data-count-to="${Math.round(collected)}" data-prefix="?">?0</div>
+      <div class="stat-value mono" data-count-to="${Math.round(collected)}" data-prefix="₱">₱0</div>
       <div class="stat-sub">${monthBookings.length} booking${monthBookings.length===1?'':'s'}</div>
     </div>
     <div class="stat-card outstanding">
       <div class="stat-label">Outstanding balance</div>
-      <div class="stat-value mono" data-count-to="${Math.round(outstanding)}" data-prefix="?">?0</div>
+      <div class="stat-value mono" data-count-to="${Math.round(outstanding)}" data-prefix="₱">₱0</div>
       <div class="stat-sub">still to be collected</div>
     </div>
     <div class="stat-card deposits">
       <div class="stat-label">Deposits held</div>
-      <div class="stat-value mono" data-count-to="${Math.round(deposits)}" data-prefix="?">?0</div>
+      <div class="stat-value mono" data-count-to="${Math.round(deposits)}" data-prefix="₱">₱0</div>
       <div class="stat-sub">reservation deposits</div>
     </div>
     <div class="stat-card occupancy">
@@ -2123,11 +2164,10 @@ function renderTable(){
 
   tbody.innerHTML = monthBookings.map(b=>{
     const balance = Math.max(0, b.total - b.amountPaid);
-    const temporal = getTemporalState(b);
     return `
       <tr onclick="openBookingDetails('${b.id}')" style="cursor:pointer;">
-        <td><span class="temporal-dot ${temporal}"></span><strong>${escapeHtml(b.guest)}</strong>${b.phone ? `<div style="font-size:11px;color:var(--text-muted);margin-left:12px;">${escapeHtml(b.phone)}</div>`:''}</td>
-        <td class="mono">${formatShort(b.checkIn)} ? ${formatShort(b.checkOut)} <span style="color:var(--text-muted)">${formatTime(b.checkOutTime)}</span></td>
+        <td><span class="temporal-dot" style="background:${getStatusColor(b)}"></span><strong>${escapeHtml(b.guest)}</strong>${b.phone ? `<div style="font-size:11px;color:var(--text-muted);margin-left:12px;">${escapeHtml(b.phone)}</div>`:''}</td>
+        <td class="mono">${formatShort(b.checkIn)} → ${formatShort(b.checkOut)} <span style="color:var(--text-muted)">${formatTime(b.checkOutTime)}</span></td>
         <td><span class="badge status-${b.status}">${statusLabel(b.status)}</span></td>
         <td class="mono">${formatPHP(b.total)}</td>
         <td class="mono">${formatPHP(b.amountPaid)}</td>
@@ -2167,6 +2207,22 @@ function formatTime(t){
   const d = new Date(2000,0,1,h,m);
   return d.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
 }
+function formatCountdown(t, dateStr){
+  if(!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  const target = dateStr ? parseDate(dateStr) : new Date();
+  target.setHours(h, m, 0, 0);
+  const now = new Date();
+  let diffMs = target - now;
+  const overdue = diffMs < 0;
+  diffMs = Math.abs(diffMs);
+  const totalMin = Math.floor(diffMs/60000);
+  const days = Math.floor(totalMin/1440);
+  const hh = Math.floor((totalMin % 1440)/60);
+  const mm = totalMin % 60;
+  let label = (days ? `${days}d ` : '') + (hh || days ? `${hh}h ` : '') + `${mm}m`;
+  return overdue ? `${label} overdue` : `in ${label}`;
+}
 
 /* ---------------- Drawer ---------------- */
 
@@ -2200,7 +2256,6 @@ function renderExistingForDate(dateStr){
   document.getElementById('existingBookingsWrap').style.display = 'block';
   wrap.innerHTML = dayBookings.map(b=>{
     const balance = Math.max(0, b.total - b.amountPaid);
-    const temporal = getTemporalState(b);
     const checkedOut = !!b.checkedOut;
     const checkedIn = !!b.checkedIn;
 
@@ -2214,7 +2269,7 @@ function renderExistingForDate(dateStr){
       stayInfo = `<button type="button" class="link-btn checkout-btn" onclick="event.stopPropagation(); checkOutNow('${b.id}')">Check out now</button>`;
     } else {
       const eligible = b.checkIn <= todayStr();
-      stayInfo = `<div class="reserved-badge">
+      stayInfo = `<div class="reserved-badge" style="background:${getStatusColorSoft(b)};color:${getStatusTextColor(b)}">
            <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
            Reserved${b.deposit > 0 ? ' · may downpayment' : ''} — check-in ${formatShort(b.checkIn)}
          </div>
@@ -2226,10 +2281,10 @@ function renderExistingForDate(dateStr){
     return `
       <div class="existing-card" onclick="openBookingDetails('${b.id}')" style="cursor:pointer;">
         <div class="top-row">
-          <div class="guest-name"><span class="temporal-dot ${temporal}"></span>${escapeHtml(b.guest)}</div>
+          <div class="guest-name"><span class="temporal-dot" style="background:${getStatusColor(b)}"></span>${escapeHtml(b.guest)}</div>
           <span class="badge status-${b.status}">${statusLabel(b.status)}</span>
         </div>
-        <div class="dates">${formatShort(b.checkIn)} ${formatTime(b.checkInTime)} ? ${formatShort(b.checkOut)} ${formatTime(b.checkOutTime)} · ${nightsBetween(b.checkIn,b.checkOut)} night(s)</div>
+        <div class="dates">${formatShort(b.checkIn)} ${formatTime(b.checkInTime)} → ${formatShort(b.checkOut)} ${formatTime(b.checkOutTime)} · ${nightsBetween(b.checkIn,b.checkOut)} night(s)</div>
         <div class="money-row"><span>Total</span><b>${formatPHP(b.total)}</b></div>
         <div class="money-row"><span>Paid</span><b>${formatPHP(b.amountPaid)}</b></div>
         <div class="money-row"><span>Balance</span><b>${formatPHP(balance)}</b></div>
@@ -2291,7 +2346,7 @@ function editBooking(id){
 function deleteBooking(id){
   const b = bookings.find(x=>x.id===id);
   if(!b) return;
-  if(!confirm(`Delete booking for ${b.guest} (${formatShort(b.checkIn)} ? ${formatShort(b.checkOut)})?`)) return;
+  if(!confirm(`Delete booking for ${b.guest} (${formatShort(b.checkIn)} → ${formatShort(b.checkOut)})?`)) return;
   bookings = bookings.filter(x=>x.id!==id);
   persistBookings();
   renderAll();
@@ -2309,7 +2364,6 @@ let detailsBookingId = null;
 function renderBookingDetailsModal(b){
   const balance = Math.max(0, b.total - b.amountPaid);
   const nights = nightsBetween(b.checkIn, b.checkOut);
-  const temporal = getTemporalState(b);
   const checkedIn = !!b.checkedIn;
   const checkedOut = !!b.checkedOut;
   const eligible = b.checkIn <= todayStr();
@@ -2320,7 +2374,7 @@ function renderBookingDetailsModal(b){
   else { phoneEl.textContent = ''; phoneEl.style.display = 'none'; }
 
   const temporalLabel = checkedOut ? 'Checked out' : (checkedIn ? 'Checked in' : 'Reserved');
-  const temporalColor = temporal === 'past' ? 'var(--danger)' : (temporal === 'active' ? 'var(--success)' : 'var(--gold)');
+  const temporalColor = getStatusColor(b);
   document.getElementById('detailsBadges').innerHTML = `
     <span class="details-badge">${statusLabel(b.status)}</span>
     <span class="details-badge"><span class="dot" style="background:${temporalColor}"></span>${temporalLabel}</span>
@@ -2534,14 +2588,22 @@ function renderTodayStrip(){
   }
 
   const chips = [];
+  const liveDate = formatShort(t);
+  const now = new Date();
+  const nowKey = pad(now.getHours()) + ':' + pad(now.getMinutes());
   departures.sort((a,b)=> (a.checkOutTime||'').localeCompare(b.checkOutTime||''));
   arrivals.sort((a,b)=> (a.checkInTime||'').localeCompare(b.checkInTime||''));
 
   departures.forEach(b=>{
-    chips.push(`<div class="today-chip departure"><span class="tag">Check-out</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatTime(b.checkOutTime)}</span></div>`);
+    chips.push(`<div class="today-chip departure"><span class="tag">LIVE: ${liveDate}</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatCountdown(b.checkOutTime, b.checkOut)}</span></div>`);
   });
   arrivals.forEach(b=>{
-    chips.push(`<div class="today-chip arrival"><span class="tag">Check-in</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatTime(b.checkInTime)}</span></div>`);
+    const hasArrived = nowKey >= (b.checkInTime || '14:00');
+    if(hasArrived){
+      chips.push(`<div class="today-chip arrival"><span class="tag">LIVE: ${liveDate}</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatCountdown(b.checkOutTime, b.checkOut)}</span></div>`);
+    } else {
+      chips.push(`<div class="today-chip arrival"><span class="tag">Check-in</span><span class="name">${escapeHtml(b.guest)}</span><span class="time">${formatCountdown(b.checkInTime)}</span></div>`);
+    }
   });
   strip.innerHTML = chips.join('');
 }
@@ -2693,6 +2755,8 @@ function bootApp(){
   alarmChecker = setInterval(function(){
     autoProcessCheckouts();
     checkAlarms();
+    renderTodayStrip();
+    renderCalendar();
   }, 20000);
 
   startCloudSync();        // then take over from the cloud, in real time
@@ -2749,7 +2813,7 @@ document.getElementById('fbLoginForm').addEventListener('submit', async function
     } else if(code === 'auth/too-many-requests'){
       msg = `Sobrang dami ng subok — sandaling maghintay bago ulitin. (${code})`;
     } else if(code === 'auth/unauthorized-domain'){
-      msg = `Hindi pa authorized ang site na 'to sa Firebase. I-add ang domain na ito sa Firebase Console ? Authentication ? Settings ? Authorized domains: ${location.hostname}`;
+      msg = `Hindi pa authorized ang site na 'to sa Firebase. I-add ang domain na ito sa Firebase Console → Authentication → Settings → Authorized domains: ${location.hostname}`;
     } else if(code === 'auth/network-request-failed'){
       msg = `Walang connection sa Firebase — tingnan ang internet. (${code})`;
     } else if(code === 'auth/invalid-email'){
